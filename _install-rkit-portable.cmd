@@ -1,8 +1,8 @@
 :: author=audioscavenger @ it-cooking.com
-:: version=1.2
+:: version=1.0
 :: /!\ Warning: starting this batch with ADMIN rights will alter SYSTEM settings. Read carefully what it does.
 :: ----------------------------------------------------------------------------------------------------------------------
-:: This batch purpose is to create a portable Resource Kit folder containing UNIX-like commands for your convenience.
+:: This batch purpose is to create a portable Resource Kit folder with UNIX-like commands for your convenience.
 :: It features mostly command line tools including busybox, SysinternalsSuite, Rkit2003 and 7zip.
 :: Nirsoft tools are mostly GUI and therefore not included but you can easily modify this batch to include them.
 :: Note: Many tools included (such as password recovery/sniffer and even Pskill.exe from Microsoft) are considered 
@@ -293,8 +293,8 @@ goto :EOF
 echo.%r%
 echo ==============================================================
 echo ERROR: %HIGH%%*%END%%r%
-IF %1 == setx echo %y%Consider installing Windows XP Service Pack 2 Support Tools at https://www.microsoft.com/en-us/download/details.aspx?id=18546 %r%
-IF %1 == powershell echo %y%Consider upgrading to Windows XP SP3 or Server 2003 SP2 (or download wget.exe manually) %r%
+IF %1 == setx echo %y%Consider installing Windows XP SP3 or Server 2003 SP2 %r%
+IF %1 == powershell echo %y%Consider install Management Framework at https://support.microsoft.com/en-us/help/968929/ (or download wget.exe manually) %r%
 echo ==============================================================
 echo.%END%
 pause
