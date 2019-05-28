@@ -32,6 +32,8 @@ Many tools included (such as password recovery/sniffer and even Pskill.exe from 
 harmful/unwanted by exaggerated/mental AVs/services such as Sophos, and will shoot false positives.
 Prepare yourself to explain these alerts to your IT bff.
 
+There is a discussion on the subject here: [antivirus-companies-cause-a-big-headache-to-small-developers](http://blog.nirsoft.net/2009/05/17/antivirus-companies-cause-a-big-headache-to-small-developers/)
+
 This batch wil not delete any file on your system other than the one it downloads.
 
 
