@@ -14,18 +14,20 @@ Nirsoft tools are mostly GUI and therefore not included but you can easily modif
 * Backward compatible down to windows XP
 * Auto-select 32 or 64 bits binaries based on your system!
 * Does not need ADMIN rights
-* colors!
+* Colors! (since Win 10)
 
 ## What is downloaded?
-- 7zip 19.00
-- gawk 
-- wget
-- busybox
-- SysinternalsSuite
+- 7zip _19.00_
+- curl _7.65_
+- dig  _9.15.0_
+- gawk _3.1.6-1_
+- wget _1.20.3_
+- busybox _latest_
+- SysinternalsSuite _latest_
 - Windows Server 2003 Resource Kit Tools
 
 ## What is installed?
-+ install 7zip 19.00
++ install 7zip
 + add 7zip file associations for local user  (/!\ ==> or ALL USERS   if started as ADMIN!)
 + update PATH variable for local user        (/!\ ==> or SYSTEM PATH if started as ADMIN!)
 
@@ -57,27 +59,31 @@ Warning: starting this batch with ADMIN rights will alter the SYSTEM PATH value.
 # Compatibility
 
 ## Windows version
-This batch *should* be downward compatible to:
+This batch *should* be compatible down to:
 * Windows XP SP3
 * Windows Server 2000
 
-* I didn't test it with Vista because it's crap, afaik.
+* I didn't test it with Vista because it's crap, nobody use that.
 
 ## Requisites: 
-* setx (included in XP SP3)
-* powershell 2.0 (install [Windows Management Framework](https://support.microsoft.com/en-us/help/968929/))
-* mklink (included in Seven - will be circumvented at disk cost)
+* setx (included since XP SP3)
+* powershell 2.0 (KB for XP/2000: install [Windows Management Framework](https://support.microsoft.com/en-us/help/968929/))
+* mklink (included since Seven - will be circumvented on XP/2000 at disk cost)
 
 
 # TODO List
 * [ ] use 7zip portable instead
-* [ ] curl
-* [ ] dig
-* [ ] detect UNC path because symlink won't work
+* [x] curl
+* [x] dig
+* [ ] detect UNC path because symlink won't work on network folders
 * [ ] Please be my guest
 
 Changelog
 ---------
+* 1.1
+  * added curl 7.65
+  * added dig 9.15.0
+
 * 1.0
   * just tested with XP, Seven and 10
   * found a way to save diskspace with mklink

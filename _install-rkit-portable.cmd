@@ -87,6 +87,14 @@ call :power_unzip %TMPDIR%\curl-7.65.0_1-win%bits%-mingw.zip curl-ca-bundle.crt 
 call :power_unzip %TMPDIR%\curl-7.65.0_1-win%bits%-mingw.zip curl.exe keep
 call :power_unzip %TMPDIR%\curl-7.65.0_1-win%bits%-mingw.zip libcurl-x%bits%.dll
 
+call :power_download ftp://ftp.isc.org/isc/bind9/cur/9.15/BIND9.15.0.%bitx%.zip %TMPDIR%\BIND9.15.0.%bitx%.zip
+call :power_unzip %TMPDIR%\BIND9.15.0.%bitx%.zip libbind9.dll keep
+call :power_unzip %TMPDIR%\BIND9.15.0.%bitx%.zip libirs.dll keep
+call :power_unzip %TMPDIR%\BIND9.15.0.%bitx%.zip libdns.dll keep
+call :power_unzip %TMPDIR%\BIND9.15.0.%bitx%.zip libisc.dll keep
+call :power_unzip %TMPDIR%\BIND9.15.0.%bitx%.zip libisccfg.dll keep
+call :power_unzip %TMPDIR%\BIND9.15.0.%bitx%.zip libxml2.dll
+
 call :power_download https://frippery.org/files/busybox/busybox.exe .\busybox.exe
 call :install_busybox_symlink
 
@@ -132,9 +140,11 @@ IF NOT DEFINED setx call :error setx NOT FOUND& goto :end
 for %%x in (wget.exe) do (set wget=%%~$PATH:x)
 
 set bits=32
+set bitx=x86
 if "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
   set arch=-x64
   set bits=64
+  set bitx=x64
 )
 
 :: check current user is local admin
