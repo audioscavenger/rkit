@@ -1,0 +1,1 @@
+powershell "[Text.Encoding]::UTF8.GetString([convert]::FromBase64String(\"%1\"))"

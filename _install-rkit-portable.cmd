@@ -1,5 +1,5 @@
 :: author=audioscavenger @ it-cooking.com
-:: version=1.0
+:: version=1.2
 :: /!\ Warning: starting this batch with ADMIN rights will alter SYSTEM settings. Read carefully what it does.
 :: ----------------------------------------------------------------------------------------------------------------------
 :: This batch purpose is to create a portable Resource Kit folder with UNIX-like commands for your convenience.
@@ -13,16 +13,23 @@
 :: This batch *should* be compatible from Windows XP SP3 Pro and beyond.
 :: Requisites: setx, powershell, mklink (will be circumvented at disk cost)
 :: ----------------------------------------------------------------------------------------------------------------------
-:: - download 7zip 19.00
-:: - download curl
-:: - download gawk
-:: - download wget
-:: - download busybox
-:: - download SysinternalsSuite
-:: - download Windows Server 2003 Resource Kit Tools
+:: - [x] 7zip _19.00_
+:: - [x] blat mail _3.2.19_
+:: - [x] busybox _latest_
+:: - [x] curl _7.65_
+:: - [x] dig  _9.15.0_
+:: - [x] dirhash _latest_
+:: - [x] gawk _3.1.6-1_
+:: - [x] SysinternalsSuite _latest_
+:: - [x] tcpdump _latest_
+:: - [x] upx _3.95w_
+:: - [x] XMLStarlet _latest_
+:: - [x] wget _1.20.3_
+:: - [x] Windows Server 2003 Resource Kit Tools
 :: + install 7zip 19.00
 :: + add 7zip file associations for local user  (/!\ ==> or ALL USERS   if started as ADMIN!)
 :: + update PATH variable for local user        (/!\ ==> or SYSTEM PATH if started as ADMIN!)
+:: + compress every DLL with UPX
 :: ----------------------------------------------------------------------------------------------------------------------
 :: TODO:
 :: [ ] use 7zip portable instead
@@ -47,33 +54,10 @@ call :pre_requisites
 :: 7zip first, in any case we need 7z.exe
 set ver7zMaj=19
 set ver7zMin=00
-call :power_download https://downloads.sourceforge.net/project/sevenzip/7-Zip/%ver7zMaj%.%ver7zMin%/7z%ver7zMaj%%ver7zMin%%arch%.exe %TMPDIR%\7z%ver7zMaj%%ver7zMin%%arch%.exe
-call :install_7zip %TMPDIR%\7z%ver7zMaj%%ver7zMin%%arch%.exe
-call :setup_7zip_Extn
-call :copy_7z
-
-:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-:: UnxUtils are deprecated since the win32 port of busybox
-REM call :power_download https://downloads.sourceforge.net/project/unxutils/unxutils/current/UnxUtils.zip %TMPDIR%\UnxUtils.zip
-REM call :power_unzip %TMPDIR%\UnxUtils.zip *.exe
-
-:: Nirsoft tools are not included by default but you can uncomment this section if you like.
-:: Note that some tools such as password viewers will trigger exaggerated/mental AVs/services that easily shoot false positives.
-REM call :wget_nirsoft http://nirsoft.net/packages/passrecenc.zip %TMPDIR%\passrecenc.zip
-REM call :7unzip %TMPDIR%\passrecenc.zip .\ nirsoft123!
-REM call :wget_nirsoft http://www.nirsoft.net/protected_downloads/passreccommandline.zip %TMPDIR%\passreccommandline.zip download nirsoft123!
-REM call :7unzip %TMPDIR%\passreccommandline.zip .\ nirsoft123!
-REM call :wget_nirsoft http://nirsoft.net/packages/systools.zip %TMPDIR%\systools.zip
-REM call :7unzip %TMPDIR%\systools.zip .\
-REM call :wget_nirsoft http://nirsoft.net/packages/brtools.zip %TMPDIR%\brtools.zip
-REM call :7unzip %TMPDIR%\brtools.zip .\
-REM call :wget_nirsoft http://nirsoft.net/packages/progtools.zip %TMPDIR%\progtools.zip
-REM call :7unzip %TMPDIR%\progtools.zip .\
-REM call :wget_nirsoft http://nirsoft.net/packages/networktools.zip %TMPDIR%\networktools.zip
-REM call :7unzip %TMPDIR%\networktools.zip .\
-REM call :wget_nirsoft http://nirsoft.net/packages/x64tools.zip %TMPDIR%\x64tools.zip
-REM call :7unzip %TMPDIR%\x64tools.zip .\ nirsoft123!
-:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+REM call :power_download https://downloads.sourceforge.net/project/sevenzip/7-Zip/%ver7zMaj%.%ver7zMin%/7z%ver7zMaj%%ver7zMin%%arch%.exe %TMPDIR%\7z%ver7zMaj%%ver7zMin%%arch%.exe
+REM call :install_7zip %TMPDIR%\7z%ver7zMaj%%ver7zMin%%arch%.exe
+REM call :setup_7zip_Extn
+REM call :copy_7z
 
 :: awk is included in busybox but it's a limited version
 call :power_download https://downloads.sourceforge.net/project/gnuwin32/gawk/3.1.6-1/gawk-3.1.6-1-bin.zip %TMPDIR%\gawk-3.1.6-1-bin.zip
@@ -98,15 +82,76 @@ call :power_unzip %TMPDIR%\BIND9.15.0.%bitx%.zip libxml2.dll
 call :power_download https://frippery.org/files/busybox/busybox.exe .\busybox.exe
 call :install_busybox_symlink
 
-:: SysinternalsSuite includes PsTools which will trigger exaggerated/mental AVs/services that easily shoot false positives.
-call :power_download https://download.sysinternals.com/files/SysinternalsSuite.zip %TMPDIR%\SysinternalsSuite.zip
-call :7unzip %TMPDIR%\SysinternalsSuite.zip .\
+:: tcpdump for windows
+call :power_download "http://chiselapp.com/user/rkeene/repository/tcpdump-windows-wrapper/raw/tcpdump.exe?name=2e3d4d01fa597e1f50ba3ead8f18b8eeacb83812" .\tcpdump.exe
+
+:: XMLStarlet Command Line XML Toolkit
+call :power_download https://sourceforge.net/projects/xmlstar/files/latest/download %TMPDIR%\xmlstarlet-win32.zip
+call :power_unzip %TMPDIR%\xmlstarlet-win32.zip xml.exe
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:: OPTIONAL ZONE ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:: UnxUtils are deprecated since the win32 port of busybox
+REM call :power_download https://downloads.sourceforge.net/project/unxutils/unxutils/current/UnxUtils.zip %TMPDIR%\UnxUtils.zip
+REM call :power_unzip %TMPDIR%\UnxUtils.zip *.exe
+
+:: Nirsoft tools are not included by default but you can uncomment this section if you like.
+:: Note that some tools such as password viewers will trigger exaggerated/mental AVs/services that easily shoot false positives.
+REM call :wget_nirsoft http://nirsoft.net/packages/passrecenc.zip %TMPDIR%\passrecenc.zip
+REM call :7unzip %TMPDIR%\passrecenc.zip .\ nirsoft123!
+REM call :wget_nirsoft http://www.nirsoft.net/protected_downloads/passreccommandline.zip %TMPDIR%\passreccommandline.zip download nirsoft123!
+REM call :7unzip %TMPDIR%\passreccommandline.zip .\ nirsoft123!
+REM call :wget_nirsoft http://nirsoft.net/packages/systools.zip %TMPDIR%\systools.zip
+REM call :7unzip %TMPDIR%\systools.zip .\
+REM call :wget_nirsoft http://nirsoft.net/packages/brtools.zip %TMPDIR%\brtools.zip
+REM call :7unzip %TMPDIR%\brtools.zip .\
+REM call :wget_nirsoft http://nirsoft.net/packages/progtools.zip %TMPDIR%\progtools.zip
+REM call :7unzip %TMPDIR%\progtools.zip .\
+REM call :wget_nirsoft http://nirsoft.net/packages/networktools.zip %TMPDIR%\networktools.zip
+REM call :7unzip %TMPDIR%\networktools.zip .\
+REM call :wget_nirsoft http://nirsoft.net/packages/x64tools.zip %TMPDIR%\x64tools.zip
+REM call :7unzip %TMPDIR%\x64tools.zip .\ nirsoft123!
 
 :: Windows Server 2003 Resource Kit Tools used to be a must have but I don't remember a time when I used any of their tools
 call :power_download https://download.microsoft.com/download/8/e/c/8ec3a7d8-05b4-440a-a71e-ca3ee25fe057/rktools.exe %TMPDIR%\rktools.exe
 call :7unzip %TMPDIR%\rktools.exe %TMPDIR%\
 call :7unzip %TMPDIR%\rktools.msi .\
 
+:: Blat - A Windows (32 & 64 bit) command line SMTP mailer. Use it to automatically eMail logs, the contents of a html FORM, or whatever else you need to send. 
+:: TODO: handle the special case url for blat32
+REM "https://downloads.sourceforge.net/project/blat/Blat Full Version/32 bit versions/Win2000 and newer/blat3219_32.full.zip"
+call :power_download "https://downloads.sourceforge.net/project/blat/Blat Full Version/64 bit versions/blat3219_64.full.zip" %TMPDIR%\blat3219_64.full.zip
+call :power_unzip %TMPDIR%\blat3219_64.full.zip blat.exe keep
+call :power_unzip %TMPDIR%\blat3219_64.full.zip blat.dll
+
+:: UPX is a free, portable, extendable, high-performance executable packer for several executable formats.
+call :power_download https://github.com/upx/upx/releases/download/v3.95/upx-3.95-win%bits%.zip %TMPDIR%\upx-3.95-win%bits%.zip
+call :power_unzip %TMPDIR%\upx-3.95-win%bits%.zip upx.exe
+
+:: TODO: activestate perl v5.8.4 built for MSWin32-x86-multi-thread - I use just 2 files to get it work (without modules or cpan etc indeed) - total = 824KB
+:: TODO: it seems to be possible with strawberry perl 5.30 but the zipfile is 144MB, and the files needed total 5MB, down to 1.7MB with upx *.dll
+:: http://strawberryperl.com/download/5.30.0.1/strawberry-perl-5.30.0.1-%bits%bit.zip
+:: perl.exe
+:: libgcc_s_dw2-1.dll
+:: perl530.dll
+:: libwinpthread-1.dll
+:: libstdc++-6.dll
+
+:: Jad - the fast Java Decompiler - http://kpdus.com/jad.html - example: jad -p example1.class >myexm1.java
+:: TODO: download link file is corrupt
+:: call :power_download http://kpdus.com/jad/winnt/jadnt158.zip %TMPDIR%\jadnt158.zip
+:: call :power_unzip %TMPDIR%\jadnt158.zip jad.exe
+
+:: Directory checksum tool
+call :power_download https://www.idrix.fr/Root/Samples/DirHash%arch%.zip %TMPDIR%\DirHash%arch%.zip
+call :power_unzip %TMPDIR%\DirHash%arch%.zip dirhash.exe
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:: compress all DLL
+echo.
+upx *.dll
+echo.
 IF %ADMIN% EQU 0 (call :update_HKLM_path) ELSE (call :update_HKCU_path)
 
 :: echo systempropertiesadvanced.exe
@@ -232,20 +277,32 @@ goto :EOF
 
 :power_download url output [user pass]
 echo %c%%~0%END% %y%%1 %HIGH%%2%END%
-del /q %2 2>NUL
+set url=%1
+set file=%2
+set user=%3
+set password=%4
+for %%x in (wget.exe) do (set wget=%%~$PATH:x)
+IF EXIST .\wget.exe set wget=.\wget.exe
+
+IF NOT DEFINED file echo USAGE: %~nx0 url output [user pass]& exit /b
+IF EXIST %file% del /q %file% 2>NUL
 IF DEFINED wget (
-  wget %1 -O %2 --user=%3 --password=%4 2>&1 | grep saved
+  wget %url% -O %file% --user=%user% --password=%password% 2>&1 | findstr /C:saved
 ) ELSE (
-  powershell -executionPolicy bypass -Command "&{$client = new-object System.Net.WebClient ; $client.DownloadFile("""%1""","""%2""")}"
+  powershell -executionPolicy bypass -Command "&{$client = new-object System.Net.WebClient ; $client.DownloadFile('%url%','%file%')}"
 )
 goto :EOF
 
 :power_unzip archive filter del
 IF NOT EXIST %1 goto :EOF
 echo %HIGH%%c%%~0%END%%c% %1 %2
+set file=%1
+set filter=%2
 set del=%3
-powershell -executionPolicy bypass -Command "&{Add-Type -AssemblyName System.IO.Compression.FileSystem ; $Filter = '%2' ; $zip = [System.IO.Compression.ZipFile]::OpenRead('%1') ; $zip.Entries | Where-Object { $_.Name -like $Filter } | ForEach-Object { $FileName = $_.Name ; [System.IO.Compression.ZipFileExtensions]::ExtractToFile($_, "$FileName", $true)} }"
-IF NOT [%del%]==[keep] del /q %1 2>NUL
+IF NOT DEFINED filter echo USAGE: %~0 archive filter del& exit /b
+IF NOT EXIST %file% echo USAGE: %~0 archive filter del& exit /b
+powershell -executionPolicy bypass -Command "&{Add-Type -AssemblyName System.IO.Compression.FileSystem ; $Filter = '%filter%' ; $zip = [System.IO.Compression.ZipFile]::OpenRead('%file%') ; $zip.Entries | Where-Object { $_.Name -like $Filter } | ForEach-Object { $FileName = $_.Name ; [System.IO.Compression.ZipFileExtensions]::ExtractToFile($_, "$FileName", $true)} }"
+IF NOT [%del%]==[keep] del /q %file% 2>NUL
 goto :EOF
 
 :7unzip archive target [password]

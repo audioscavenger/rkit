@@ -5,6 +5,10 @@
 !.gitignore
 !.gitattributes
 !_install-rkit-portable.cmd
+!power_download.cmd
+!power_unzip.cmd
+!base64dec.cmd
+!base64enc.cmd
 !README.md
 !LICENSE
 

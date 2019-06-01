@@ -1,0 +1,1 @@
+powershell "[convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(\"%1\"))"
