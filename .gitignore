@@ -9,6 +9,7 @@
 !power_unzip.cmd
 !base64dec.cmd
 !base64enc.cmd
+!file.cmd
 !README.md
 !LICENSE
 

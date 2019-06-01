@@ -1,5 +1,5 @@
 :: author=audioscavenger @ it-cooking.com
-:: version=1.2
+:: version=1.3
 :: /!\ Warning: starting this batch with ADMIN rights will alter SYSTEM settings. Read carefully what it does.
 :: ----------------------------------------------------------------------------------------------------------------------
 :: This batch purpose is to create a portable Resource Kit folder with UNIX-like commands for your convenience.
@@ -14,12 +14,15 @@
 :: Requisites: setx, powershell, mklink (will be circumvented at disk cost)
 :: ----------------------------------------------------------------------------------------------------------------------
 :: - [x] 7zip _19.00_
+:: - [x] apache benchmark _2.4.39_
 :: - [x] blat mail _3.2.19_
 :: - [x] busybox _latest_
 :: - [x] curl _7.65_
 :: - [x] dig  _9.15.0_
 :: - [x] dirhash _latest_
+:: - [x] file _5.03_
 :: - [x] gawk _3.1.6-1_
+:: - [x] openSSL _1.1.1c_
 :: - [x] SysinternalsSuite _latest_
 :: - [x] tcpdump _latest_
 :: - [x] upx _3.95w_
@@ -146,6 +149,25 @@ call :power_unzip %TMPDIR%\upx-3.95-win%bits%.zip upx.exe
 :: Directory checksum tool
 call :power_download https://www.idrix.fr/Root/Samples/DirHash%arch%.zip %TMPDIR%\DirHash%arch%.zip
 call :power_unzip %TMPDIR%\DirHash%arch%.zip dirhash.exe
+
+:: apache benchmark tool is very basic, and while it will give you a solid idea of some performance, it is a bad idea to only depend on it if you plan to have your site exposed to serious stress in production.
+call :power_download https://home.apache.org/~steffenal/VC15/binaries/httpd-2.4.39-win%bits%-VC15.zip %TMPDIR%\httpd-2.4.39-win%bits%-VC15.zip
+call :power_unzip %TMPDIR%\httpd-2.4.39-win%bits%-VC15.zip ab.exe keep
+call :power_unzip %TMPDIR%\httpd-2.4.39-win%bits%-VC15.zip abs.exe keep
+call :power_unzip %TMPDIR%\httpd-2.4.39-win%bits%-VC15.zip libcrypto-1_1%arch%.dll keep
+call :power_unzip %TMPDIR%\httpd-2.4.39-win%bits%-VC15.zip libssl-1_1%arch%.dll keep
+call :power_unzip %TMPDIR%\httpd-2.4.39-win%bits%-VC15.zip openssl.exe
+
+:: File for Windows
+call :power_download http://downloads.sourceforge.net/gnuwin32/file-5.03-bin.zip %TMPDIR%\file-5.03-bin.zip
+call :power_unzip %TMPDIR%\file-5.03-bin.zip file.exe keep
+call :power_unzip %TMPDIR%\file-5.03-bin.zip magic1.dll keep
+call :power_unzip %TMPDIR%\file-5.03-bin.zip magic keep
+call :power_unzip %TMPDIR%\file-5.03-bin.zip magic.mgc
+move /y file.exe filemagic.exe
+call :power_download https://downloads.sourceforge.net/project/gnuwin32/file/4.26/file-4.26-dep.zip %TMPDIR%\file-4.26-dep.zip
+call :power_unzip %TMPDIR%\file-4.26-dep.zip regex2.dll keep
+call :power_unzip %TMPDIR%\file-4.26-dep.zip zlib1.dll
 
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: compress all DLL

@@ -19,12 +19,15 @@ Nirsoft tools are mostly GUI and therefore not included but you can easily modif
 
 ## What is downloaded?
 - [x] 7zip _19.00_
+- [x] apache benchmark _2.4.39_
 - [x] blat mail _3.2.19_
 - [x] busybox _latest_
 - [x] curl _7.65_
 - [x] dig  _9.15.0_
 - [x] dirhash _latest_
+- [x] file _5.03_
 - [x] gawk _3.1.6-1_
+- [x] openSSL _1.1.1c_
 - [x] SysinternalsSuite _latest_
 - [x] tcpdump _latest_
 - [x] upx _3.95w_
@@ -69,8 +72,9 @@ Warning: starting this batch with ADMIN rights will alter the SYSTEM PATH value.
 This batch *should* be compatible down to:
 * Windows XP SP3
 * Windows Server 2000
-
 * I didn't test it with Vista because it's crap, nobody use that.
+
+Refer to [KB article 317949](http://support.microsoft.com/default.aspx?scid=kb;en-us;317949) if you need the gory details exactly why you must NEVER run the original Windows XP or SP1.
 
 ## Requisites: 
 * setx (included since XP SP3)
@@ -79,22 +83,29 @@ This batch *should* be compatible down to:
 
 
 # TODO List
-* [ ] use 7zip portable instead
+* [x] file magic
+* [x] ab
 * [x] curl
 * [x] dig
 * [x] base64 encore/decode
 * [x] upx
-* [ ] blat mail 32 or 64 (only 64 now)
 * [x] XMLStarlet
 * [x] dirhash
 * [x] tcpdump
+* [ ] use 7zip portable instead
 * [ ] JAD
 * [ ] Perl
 * [ ] detect UNC path because symlink won't work on network folders
+* [ ] blat mail 32 or 64 (only 64 now)
 * [ ] Please be my guest
 
 Changelog
 ---------
+* 1.3
+  * added ab apache benchmark tool 2.4.39
+  * added openSSL 1.1.1c
+  * added file magic 5.03
+
 * 1.2
   * added blat64 3.2.19
   * added base64 encode/decode batch

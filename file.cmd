@@ -1,0 +1,1 @@
+@"%~dp0filemagic.exe" -m "%~dp0magic" %*
