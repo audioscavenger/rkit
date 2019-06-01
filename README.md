@@ -12,7 +12,9 @@ Nirsoft tools are mostly GUI and therefore not included but you can easily modif
 ## Features
 * MSDOS only (plus a bit of powershell to download the first tools)
 * Backward compatible down to windows XP
-* Does not need ADMIN rights!
+* Auto-select 32 or 64 bits binaries based on your system!
+* Does not need ADMIN rights
+* colors!
 
 ## What is downloaded?
 - 7zip 19.00
@@ -44,7 +46,7 @@ Warning: starting this batch with ADMIN rights will alter the SYSTEM PATH value.
 
 ### Installation in User mode
 1. start it
-2. logoff / log back in (to reload the PATH environment)
+2. logoff / log back in (to reload the USER PATH environment)
 3. enjoy
 
 ### Installation in ADMIN

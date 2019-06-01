@@ -14,6 +14,7 @@
 :: Requisites: setx, powershell, mklink (will be circumvented at disk cost)
 :: ----------------------------------------------------------------------------------------------------------------------
 :: - download 7zip 19.00
+:: - download curl
 :: - download gawk
 :: - download wget
 :: - download busybox
@@ -76,11 +77,15 @@ REM call :7unzip %TMPDIR%\x64tools.zip .\ nirsoft123!
 
 :: awk is included in busybox but it's a limited version
 call :power_download https://downloads.sourceforge.net/project/gnuwin32/gawk/3.1.6-1/gawk-3.1.6-1-bin.zip %TMPDIR%\gawk-3.1.6-1-bin.zip
-del /q .\awk.exe 2>NUL
-call :power_unzip %TMPDIR%\gawk-3.1.6-1-bin.zip awk.exe
+call :power_unzip %TMPDIR%\gawk-3.1.6-1-bin.zip gawk.exe
 
 :: wget is included in busybox but it's a limited version
 call :power_download https://eternallybored.org/misc/wget/1.20.3/%bits%/wget.exe .\wget.exe
+
+call :power_download https://curl.haxx.se/windows/dl-7.65.0_1/curl-7.65.0_1-win%bits%-mingw.zip %TMPDIR%\curl-7.65.0_1-win%bits%-mingw.zip
+call :power_unzip %TMPDIR%\curl-7.65.0_1-win%bits%-mingw.zip curl-ca-bundle.crt keep
+call :power_unzip %TMPDIR%\curl-7.65.0_1-win%bits%-mingw.zip curl.exe keep
+call :power_unzip %TMPDIR%\curl-7.65.0_1-win%bits%-mingw.zip libcurl-x%bits%.dll
 
 call :power_download https://frippery.org/files/busybox/busybox.exe .\busybox.exe
 call :install_busybox_symlink
@@ -225,11 +230,12 @@ IF DEFINED wget (
 )
 goto :EOF
 
-:power_unzip archive filter
+:power_unzip archive filter del
 IF NOT EXIST %1 goto :EOF
-echo %c%%~0%END% %1 %2
-powershell -executionPolicy bypass -Command "&{Add-Type -AssemblyName System.IO.Compression.FileSystem ; $Filter = '%2' ; $zip = [System.IO.Compression.ZipFile]::OpenRead("""%1""") ; $zip.Entries | Where-Object { $_.FullName -like $Filter } | ForEach-Object { $FileName = $_.Name ; [System.IO.Compression.ZipFileExtensions]::ExtractToFile($_, "$FileName", $true)} }"
-del /q %1 2>NUL
+echo %HIGH%%c%%~0%END%%c% %1 %2
+set del=%3
+powershell -executionPolicy bypass -Command "&{Add-Type -AssemblyName System.IO.Compression.FileSystem ; $Filter = '%2' ; $zip = [System.IO.Compression.ZipFile]::OpenRead('%1') ; $zip.Entries | Where-Object { $_.Name -like $Filter } | ForEach-Object { $FileName = $_.Name ; [System.IO.Compression.ZipFileExtensions]::ExtractToFile($_, "$FileName", $true)} }"
+IF NOT [%del%]==[keep] del /q %1 2>NUL
 goto :EOF
 
 :7unzip archive target [password]
