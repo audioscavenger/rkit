@@ -1,4 +1,8 @@
-:: author=audioscavenger @ it-cooking.com
+::   install-rkit-portable  Copyright (C) <2019>  <audioscavenger@it-cooking.com>
+::   This program comes with ABSOLUTELY NO WARRANTY;
+::   This is free software, and you are welcome to redistribute it
+::   under certain conditions; https://www.gnu.org/licenses/gpl-3.0.html
+:: ----------------------------------------------------------------------------------------------------------------------
 :: version=1.3
 :: /!\ Warning: starting this batch with ADMIN rights will alter SYSTEM settings. Read carefully what it does.
 :: ----------------------------------------------------------------------------------------------------------------------
