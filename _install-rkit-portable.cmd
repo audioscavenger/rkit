@@ -3,11 +3,10 @@
 ::   This is free software, and you are welcome to redistribute it
 ::   under certain conditions; https://www.gnu.org/licenses/gpl-3.0.html
 :: ----------------------------------------------------------------------------------------------------------------------
-:: version=1.3
-:: /!\ Warning: starting this batch with ADMIN rights will alter SYSTEM settings. Read carefully what it does.
+:: version=1.2.1
 :: ----------------------------------------------------------------------------------------------------------------------
 :: This batch purpose is to create a portable Resource Kit folder with UNIX-like commands for your convenience.
-:: It features mostly command line tools including busybox, SysinternalsSuite, Rkit2003 and 7zip.
+:: It features mostly command line tools including busybox, SysinternalsSuite, Rkit2003 and 7zip among many.
 :: Nirsoft tools are mostly GUI and therefore not included but you can easily modify this batch to include them.
 :: Note: Many tools included (such as password recovery/sniffer and even Pskill.exe from Microsoft) are considered 
 ::  harmful/unwanted by exaggerated/mental AVs/services such as Sophos, and will shoot false positives.
@@ -16,6 +15,7 @@
 :: This batch will operate in the folder it is placed in, or the folder passed as parameter.
 :: This batch *should* be compatible from Windows XP SP3 Pro and beyond.
 :: Requisites: setx, powershell, mklink (will be circumvented at disk cost)
+:: /!\ Warning: starting this batch with ADMIN rights will alter SYSTEM settings. Read carefully what it does.
 :: ----------------------------------------------------------------------------------------------------------------------
 :: - [x] 7zip _19.00_
 :: - [x] apache benchmark _2.4.39_
@@ -34,8 +34,8 @@
 :: - [x] wget _1.20.3_
 :: - [x] Windows Server 2003 Resource Kit Tools
 :: + install 7zip 19.00
-:: + add 7zip file associations for local user  (/!\ ==> or ALL USERS   if started as ADMIN!)
-:: + update PATH variable for local user        (/!\ ==> or SYSTEM PATH if started as ADMIN!)
+:: + add/update 7zip file associations for local user  (/!\ ==> or ALL USERS   if started as ADMIN!)
+:: + update PATH variable for local user (prepend)     (/!\ ==> or SYSTEM PATH if started as ADMIN! (append))
 :: + compress every DLL with UPX
 :: ----------------------------------------------------------------------------------------------------------------------
 :: TODO:
@@ -89,6 +89,10 @@ call :power_unzip %TMPDIR%\BIND9.15.0.%bitx%.zip libxml2.dll
 call :power_download https://frippery.org/files/busybox/busybox.exe .\busybox.exe
 call :install_busybox_symlink
 
+:: SysinternalsSuite includes PsTools which will trigger exaggerated/mental AVs/services that easily shoot false positives.
+call :power_download https://download.sysinternals.com/files/SysinternalsSuite.zip %TMPDIR%\SysinternalsSuite.zip
+call :7unzip %TMPDIR%\SysinternalsSuite.zip .\
+
 :: tcpdump for windows
 call :power_download "http://chiselapp.com/user/rkeene/repository/tcpdump-windows-wrapper/raw/tcpdump.exe?name=2e3d4d01fa597e1f50ba3ead8f18b8eeacb83812" .\tcpdump.exe
 
@@ -106,6 +110,7 @@ REM call :power_unzip %TMPDIR%\UnxUtils.zip *.exe
 :: Nirsoft tools are not included by default but you can uncomment this section if you like.
 :: Note that some tools such as password viewers will trigger exaggerated/mental AVs/services that easily shoot false positives.
 REM call :wget_nirsoft http://nirsoft.net/packages/passrecenc.zip %TMPDIR%\passrecenc.zip
+:: warning: tons of false AV alarms for each exe in passreccommandline.zip
 REM call :7unzip %TMPDIR%\passrecenc.zip .\ nirsoft123!
 REM call :wget_nirsoft http://www.nirsoft.net/protected_downloads/passreccommandline.zip %TMPDIR%\passreccommandline.zip download nirsoft123!
 REM call :7unzip %TMPDIR%\passreccommandline.zip .\ nirsoft123!
@@ -172,6 +177,18 @@ move /y file.exe filemagic.exe
 call :power_download https://downloads.sourceforge.net/project/gnuwin32/file/4.26/file-4.26-dep.zip %TMPDIR%\file-4.26-dep.zip
 call :power_unzip %TMPDIR%\file-4.26-dep.zip regex2.dll keep
 call :power_unzip %TMPDIR%\file-4.26-dep.zip zlib1.dll
+
+:: Netcat for NT is the tcp/ip "Swiss Army knife" that never made it into any of the resource kits
+:: https://github.com/diegocr/netcat
+:: example use: nc -l -p 23 -t -e cmd.exe
+call :power_download https://joncraton.org/files/nc111nt.zip %TMPDIR%\nc111nt.zip
+call :7unzip %TMPDIR%\nc111nt.zip .\ nc nc.exe
+
+:: mailsend-go is a multi-platform command line tool to send mail via SMTP protocol - StartTLS will be used if server supports it
+:: https://github.com/muquit/mailsend-go
+:: example: mailsend-go -info -smtp smtp.gmail.com -port 587
+call :power_download https://github.com/muquit/mailsend-go/releases/download/v1.0.4/mailsend-go_1.0.4_windows-%bits%bit.zip %TMPDIR%\mailsend-go_1.0.4_windows-%bits%bit.zip
+call :power_unzip %TMPDIR%\mailsend-go_1.0.4_windows-%bits%bit.zip mailsend-go.exe
 
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: compress all DLL
@@ -298,7 +315,7 @@ goto :EOF
 :wget_nirsoft url output [user pass]
 echo %c%%~0 %1%END%
 IF DEFINED VERBOSE echo wget --referer=http://nirsoft.net %1 -O %2 --user=%3 --password=%4
-wget --referer=http://nirsoft.net %1 -O %2 --user=%3 --password=%4 2>&1 | grep saved
+wget --referer=http://nirsoft.net %1 -O %2 --user=%3 --password=%4 2>&1 | findstr/C:saved
 goto :EOF
 
 :power_download url output [user pass]
@@ -319,29 +336,33 @@ IF DEFINED wget (
 )
 goto :EOF
 
-:power_unzip archive filter del
+:power_unzip archive filter [keep]
 IF NOT EXIST %1 goto :EOF
 echo %HIGH%%c%%~0%END%%c% %1 %2
-set file=%1
+set archive=%1
 set filter=%2
 set del=%3
 IF NOT DEFINED filter echo USAGE: %~0 archive filter del& exit /b
-IF NOT EXIST %file% echo USAGE: %~0 archive filter del& exit /b
-powershell -executionPolicy bypass -Command "&{Add-Type -AssemblyName System.IO.Compression.FileSystem ; $Filter = '%filter%' ; $zip = [System.IO.Compression.ZipFile]::OpenRead('%file%') ; $zip.Entries | Where-Object { $_.Name -like $Filter } | ForEach-Object { $FileName = $_.Name ; [System.IO.Compression.ZipFileExtensions]::ExtractToFile($_, "$FileName", $true)} }"
-IF NOT [%del%]==[keep] del /q %file% 2>NUL
+IF NOT EXIST %archive% echo USAGE: %~0 archive filter del& exit /b
+powershell -executionPolicy bypass -Command "&{Add-Type -AssemblyName System.IO.Compression.FileSystem ; $Filter = '%filter%' ; $zip = [System.IO.Compression.ZipFile]::OpenRead('%archive%') ; $zip.Entries | Where-Object { $_.Name -like $Filter } | ForEach-Object { $FileName = $_.Name ; [System.IO.Compression.ZipFileExtensions]::ExtractToFile($_, "$FileName", $true)} }"
+IF NOT [%del%]==[keep] del /q %archive% 2>NUL
 goto :EOF
 
-:7unzip archive target [password]
+:7unzip archive target [password] [filter] [keep]
 echo %c%%~0 %1%END% %2 %3
-set password=
-set pass=%3
-IF DEFINED pass set password=-p%3
+set archive=%1
+set target=%2
+set password=%3
+set filter=%4
+set del=%5
+IF DEFINED password set password=-p%~3
+IF DEFINED filter set filter=%4 -r
 
 echo %g%
-IF DEFINED VERBOSE echo 7z.exe e -y -o%2 %password% %1
-7z.exe e -y -o%2 %password% %1 | grep Extracting
+IF DEFINED VERBOSE echo 7z.exe e -y -o%target% %password% %archive% %filter%
+7z.exe e -y -o%target% %password% %archive% %filter% | findstr/C:Extracting
 echo %END%
-del /q %1 2>NUL
+IF NOT [%del%]==[keep] del /q %archive% 2>NUL
 goto :EOF
 
 :update_HKLM_path
@@ -355,13 +376,13 @@ IF ERRORLEVEL 0 (
 )
 
 echo.
-echo UPDATE HKLM_PATH with %RKIT_PATH%...
+echo UPDATE %HIGH%%y%HKLM%END%_PATH with %RKIT_PATH%...
 
 :: prepend
-for /f "skip=2 tokens=3*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v PATH') do if [%%b]==[] ( setx /m PATH "%RKIT_PATH%;%%~a" ) else ( setx /m PATH "%RKIT_PATH%;%%~a %%~b" )
+REM for /f "skip=2 tokens=3*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v PATH') do if [%%b]==[] ( setx /m PATH "%RKIT_PATH%;%%~a" ) else ( setx /m PATH "%RKIT_PATH%;%%~a %%~b" )
 
 ::append
-REM for /f "skip=2 tokens=3*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v PATH') do if [%%b]==[] ( setx /m PATH "%%~a;%RKIT_PATH%" ) else ( setx /m PATH "%%~a %%~b;%RKIT_PATH%" )
+for /f "skip=2 tokens=3*" %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v PATH') do if [%%b]==[] ( setx /m PATH "%%~a;%RKIT_PATH%" ) else ( setx /m PATH "%%~a %%~b;%RKIT_PATH%" )
 
 echo UPDATE %HIGH%%y%HKLM%END%_PATH with %RKIT_PATH%... %HIGH%%g%OK%END%
 goto :EOF
@@ -377,7 +398,7 @@ IF ERRORLEVEL 0 (
 )
 
 echo.
-echo UPDATE HKCU_PATH with %RKIT_PATH%...
+echo UPDATE %y%HKCU%END%_PATH with %RKIT_PATH%...
 
 :: prepend
 for /f "skip=2 tokens=3*" %%a in ('reg query HKCU\Environment /v PATH') do if [%%b]==[] ( setx PATH "%RKIT_PATH%;%%~a" ) else ( setx PATH "%RKIT_PATH%;%%~a %%~b" )
@@ -403,6 +424,6 @@ goto :EOF
 :end
 echo %c%END%END%
 echo exit in 5 seconds...
-sleep 5
+ping -n 6 localhost >NUL 2>&1
 popd
 exit

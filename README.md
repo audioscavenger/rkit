@@ -24,7 +24,7 @@ rkit portable: Windows portable Resource Kit folder with UNIX-like commands
 Do you use command Prompt that often? Are you a shortcut nerd?
 Wouldn't that be awesome to have access to the most powerful command line tools in the world aka `Unix tools` in Windows??
 
-Seek no more, here it is. A simple batch that downloads all the good stuff for you without the need to install ANYTHING at all.
+Look no more, here it is. A simple batch that downloads all the good stuff for you without the need to install ANYTHING at all.
 
 # Presentation
 This batch purpose is to create a portable Resource Kit folder with UNIX-like commands for your convenience.
@@ -34,7 +34,7 @@ Nirsoft tools are mostly GUI and therefore commented by default but you can easi
 
 ## Features
 * MSDOS only (plus a bit of powershell to download the first tools)
-* Backward compatible down to windows XP
+* Backward compatible down to windows XP SP3
 * Auto-select 32 or 64 bits binaries based on your system!
 * Does not need ADMIN rights
 * Colors! (since Win 10)
@@ -50,6 +50,8 @@ Nirsoft tools are mostly GUI and therefore commented by default but you can easi
 - [x] dirhash _latest_
 - [x] file _5.03_
 - [x] gawk _3.1.6-1_
+- [x] mailsend-go _1.0.4_
+- [x] netcat _1.1.1_
 - [x] openSSL _1.1.1c_
 - [x] SysinternalsSuite _latest_
 - [x] tcpdump _latest_
@@ -63,7 +65,7 @@ Nirsoft tools are mostly GUI and therefore commented by default but you can easi
 
 ## What is Modified?
 + add/update 7zip file associations for local user  (/!\ ==> or ALL USERS   if started as ADMIN!)
-+ update PATH variable for local user               (/!\ ==> or SYSTEM PATH if started as ADMIN!)
++ update PATH variable for local user (prepend)     (/!\ ==> or SYSTEM PATH if started as ADMIN! (append))
 
 ## Disclaimer About Anti-Virus Warnings
 Many tools included (such as password recovery/sniffer and even Pskill.exe from Microsoft) are considered 
@@ -74,6 +76,44 @@ There is a discussion on the subject here: [antivirus-companies-cause-a-big-head
 
 This batch wil not delete any file on your system other than the one it downloads.
 
+Long story short, you *will* receive AV false alarms on these files:
+- nc.exe
+- PStools:
+  - PsExec.exe
+  - PsExec64.exe
+  - psfile.exe
+  - psfile64.exe
+  - PsGetsid.exe
+  - PsGetsid64.exe
+  - PsInfo.exe
+  - PsInfo64.exe
+  - pskill.exe
+  - pskill64.exe
+  - pslist.exe
+  - pslist64.exe
+  - PsLoggedon.exe
+  - PsLoggedon64.exe
+  - pspasswd.exe
+  - pspasswd64.exe
+  - psping.exe
+  - psping64.exe
+  - PsService.exe
+  - PsService64.exe
+  - psshutdown.exe
+  - pssuspend.exe
+  - pssuspend64.exe
+  - psloglist.exe
+  - psloglist64.exe
+- nirsoft:
+  - ChromePass.exe
+  - Dialupass.exe
+  - iepv.exe
+  - mailpv.exe
+  - mspass.exe
+  - netpass.exe
+  - PasswordFox.exe
+  - PstPassword.exe
+  - WebBrowserPassView.exe
 
 # Installation
 
@@ -113,6 +153,7 @@ Refer to [KB article 317949](http://support.microsoft.com/default.aspx?scid=kb;e
 # TODO List
 * [x] file magic
 * [x] ab
+* [x] openssl
 * [x] curl
 * [x] dig
 * [x] base64 encore/decode
@@ -120,14 +161,22 @@ Refer to [KB article 317949](http://support.microsoft.com/default.aspx?scid=kb;e
 * [x] XMLStarlet
 * [x] dirhash
 * [x] tcpdump
-* [ ] use 7zip portable instead
 * [ ] JAD
+* [ ] finddupe
+* [ ] findhash
+* [ ] hex2text
+* [x] mailsend-go
+* [ ] RsaConverter
+* [x] netcat
+* [ ] use 7zip portable instead
 * [ ] Perl
 * [ ] detect UNC path because symlink won't work on network folders
-* [ ] blat mail 32 or 64 (only 64 now)
+* [ ] blat mail 32 or 64 (only 64 now, but is it useful since )
 * [ ] Please be my guest
 
 # See Also
+
+Linux/UX ultra complete profile [exploit](https://github.com/audioscavenger/exploit)
 
 # License (is GNU GPL3)
 
