@@ -3,7 +3,7 @@
 ::   This is free software, and you are welcome to redistribute it
 ::   under certain conditions; https://www.gnu.org/licenses/gpl-3.0.html
 :: ----------------------------------------------------------------------------------------------------------------------
-:: version=1.2.1
+:: version=1.3.0
 :: ----------------------------------------------------------------------------------------------------------------------
 :: This batch purpose is to create a portable Resource Kit folder with UNIX-like commands for your convenience.
 :: It features mostly command line tools including busybox, SysinternalsSuite, Rkit2003 and 7zip among many.
@@ -39,8 +39,9 @@
 :: + compress every DLL with UPX
 :: ----------------------------------------------------------------------------------------------------------------------
 :: TODO:
+:: [x] download wget first to get rid of powershell asap
 :: [ ] use 7zip portable instead
-:: [ ] detect UNC path because symlink won't work
+:: [ ] detect UNC path because mklink won't work
 :: [ ] ?
 :: ----------------------------------------------------------------------------------------------------------------------
 
@@ -57,6 +58,10 @@ pushd %INSTALLDIR%
 
 call :set_colors
 call :pre_requisites
+call :detect_admin_mode
+
+:: wget is included in busybox but it's a limited version
+IF NOT EXIST .\wget.exe call :power_download https://eternallybored.org/misc/wget/1.20.3/%bits%/wget.exe .\wget.exe
 
 :: 7zip first, in any case we need 7z.exe
 set ver7zMaj=19
@@ -70,21 +75,10 @@ call :copy_7z
 call :power_download https://downloads.sourceforge.net/project/gnuwin32/gawk/3.1.6-1/gawk-3.1.6-1-bin.zip %TMPDIR%\gawk-3.1.6-1-bin.zip
 call :power_unzip %TMPDIR%\gawk-3.1.6-1-bin.zip gawk.exe
 
-:: wget is included in busybox but it's a limited version
-call :power_download https://eternallybored.org/misc/wget/1.20.3/%bits%/wget.exe .\wget.exe
-
 call :power_download https://curl.haxx.se/windows/dl-7.65.0_1/curl-7.65.0_1-win%bits%-mingw.zip %TMPDIR%\curl-7.65.0_1-win%bits%-mingw.zip
 call :power_unzip %TMPDIR%\curl-7.65.0_1-win%bits%-mingw.zip curl-ca-bundle.crt keep
 call :power_unzip %TMPDIR%\curl-7.65.0_1-win%bits%-mingw.zip curl.exe keep
 call :power_unzip %TMPDIR%\curl-7.65.0_1-win%bits%-mingw.zip libcurl-x%bits%.dll
-
-call :power_download ftp://ftp.isc.org/isc/bind9/cur/9.15/BIND9.15.0.%bitx%.zip %TMPDIR%\BIND9.15.0.%bitx%.zip
-call :power_unzip %TMPDIR%\BIND9.15.0.%bitx%.zip libbind9.dll keep
-call :power_unzip %TMPDIR%\BIND9.15.0.%bitx%.zip libirs.dll keep
-call :power_unzip %TMPDIR%\BIND9.15.0.%bitx%.zip libdns.dll keep
-call :power_unzip %TMPDIR%\BIND9.15.0.%bitx%.zip libisc.dll keep
-call :power_unzip %TMPDIR%\BIND9.15.0.%bitx%.zip libisccfg.dll keep
-call :power_unzip %TMPDIR%\BIND9.15.0.%bitx%.zip libxml2.dll
 
 call :power_download https://frippery.org/files/busybox/busybox.exe .\busybox.exe
 call :install_busybox_symlink
@@ -92,9 +86,6 @@ call :install_busybox_symlink
 :: SysinternalsSuite includes PsTools which will trigger exaggerated/mental AVs/services that easily shoot false positives.
 call :power_download https://download.sysinternals.com/files/SysinternalsSuite.zip %TMPDIR%\SysinternalsSuite.zip
 call :7unzip %TMPDIR%\SysinternalsSuite.zip .\
-
-:: tcpdump for windows
-call :power_download "http://chiselapp.com/user/rkeene/repository/tcpdump-windows-wrapper/raw/tcpdump.exe?name=2e3d4d01fa597e1f50ba3ead8f18b8eeacb83812" .\tcpdump.exe
 
 :: XMLStarlet Command Line XML Toolkit
 call :power_download https://sourceforge.net/projects/xmlstar/files/latest/download %TMPDIR%\xmlstarlet-win32.zip
@@ -126,16 +117,12 @@ REM call :wget_nirsoft http://nirsoft.net/packages/x64tools.zip %TMPDIR%\x64tool
 REM call :7unzip %TMPDIR%\x64tools.zip .\ nirsoft123!
 
 :: Windows Server 2003 Resource Kit Tools used to be a must have but I don't remember a time when I used any of their tools
-call :power_download https://download.microsoft.com/download/8/e/c/8ec3a7d8-05b4-440a-a71e-ca3ee25fe057/rktools.exe %TMPDIR%\rktools.exe
-call :7unzip %TMPDIR%\rktools.exe %TMPDIR%\
-call :7unzip %TMPDIR%\rktools.msi .\
+REM call :power_download https://download.microsoft.com/download/8/e/c/8ec3a7d8-05b4-440a-a71e-ca3ee25fe057/rktools.exe %TMPDIR%\rktools.exe
+REM call :7unzip %TMPDIR%\rktools.exe %TMPDIR%\
+REM call :7unzip %TMPDIR%\rktools.msi .\
 
-:: Blat - A Windows (32 & 64 bit) command line SMTP mailer. Use it to automatically eMail logs, the contents of a html FORM, or whatever else you need to send. 
-:: TODO: handle the special case url for blat32
-REM "https://downloads.sourceforge.net/project/blat/Blat Full Version/32 bit versions/Win2000 and newer/blat3219_32.full.zip"
-call :power_download "https://downloads.sourceforge.net/project/blat/Blat Full Version/64 bit versions/blat3219_64.full.zip" %TMPDIR%\blat3219_64.full.zip
-call :power_unzip %TMPDIR%\blat3219_64.full.zip blat.exe keep
-call :power_unzip %TMPDIR%\blat3219_64.full.zip blat.dll
+:: tcpdump for windows
+call :power_download "http://chiselapp.com/user/rkeene/repository/tcpdump-windows-wrapper/raw/tcpdump.exe?name=2e3d4d01fa597e1f50ba3ead8f18b8eeacb83812" .\tcpdump.exe
 
 :: UPX is a free, portable, extendable, high-performance executable packer for several executable formats.
 call :power_download https://github.com/upx/upx/releases/download/v3.95/upx-3.95-win%bits%.zip %TMPDIR%\upx-3.95-win%bits%.zip
@@ -178,17 +165,35 @@ call :power_download https://downloads.sourceforge.net/project/gnuwin32/file/4.2
 call :power_unzip %TMPDIR%\file-4.26-dep.zip regex2.dll keep
 call :power_unzip %TMPDIR%\file-4.26-dep.zip zlib1.dll
 
+:: dig download may take some time to dl
+REM call :power_download ftp://ftp.isc.org/isc/bind9/cur/9.15/BIND9.15.0.%bitx%.zip %TMPDIR%\BIND9.15.0.%bitx%.zip
+REM call :power_unzip %TMPDIR%\BIND9.15.0.%bitx%.zip dig.exe keep
+REM call :power_unzip %TMPDIR%\BIND9.15.0.%bitx%.zip libbind9.dll keep
+REM call :power_unzip %TMPDIR%\BIND9.15.0.%bitx%.zip libirs.dll keep
+REM call :power_unzip %TMPDIR%\BIND9.15.0.%bitx%.zip libdns.dll keep
+REM call :power_unzip %TMPDIR%\BIND9.15.0.%bitx%.zip libisc.dll keep
+REM call :power_unzip %TMPDIR%\BIND9.15.0.%bitx%.zip libisccfg.dll keep
+REM call :power_unzip %TMPDIR%\BIND9.15.0.%bitx%.zip libxml2.dll
+
 :: Netcat for NT is the tcp/ip "Swiss Army knife" that never made it into any of the resource kits
+:: it's powerful enough to be included in some natsy malware packages so it may trigger your AV
 :: https://github.com/diegocr/netcat
 :: example use: nc -l -p 23 -t -e cmd.exe
-call :power_download https://joncraton.org/files/nc111nt.zip %TMPDIR%\nc111nt.zip
-call :7unzip %TMPDIR%\nc111nt.zip .\ nc nc.exe
+REM call :power_download https://joncraton.org/files/nc111nt.zip %TMPDIR%\nc111nt.zip
+REM call :7unzip %TMPDIR%\nc111nt.zip .\ nc nc.exe
+
+:: Blat - A Windows (32 & 64 bit) command line SMTP mailer. Use it to automatically eMail logs, the contents of a html FORM, or whatever else you need to send. 
+:: TODO: handle the special case url for blat32
+REM "https://downloads.sourceforge.net/project/blat/Blat Full Version/32 bit versions/Win2000 and newer/blat3219_32.full.zip"
+REM call :power_download "https://downloads.sourceforge.net/project/blat/Blat Full Version/64 bit versions/blat3219_64.full.zip" %TMPDIR%\blat3219_64.full.zip
+REM call :power_unzip %TMPDIR%\blat3219_64.full.zip blat.exe keep
+REM call :power_unzip %TMPDIR%\blat3219_64.full.zip blat.dll
 
 :: mailsend-go is a multi-platform command line tool to send mail via SMTP protocol - StartTLS will be used if server supports it
 :: https://github.com/muquit/mailsend-go
 :: example: mailsend-go -info -smtp smtp.gmail.com -port 587
-call :power_download https://github.com/muquit/mailsend-go/releases/download/v1.0.4/mailsend-go_1.0.4_windows-%bits%bit.zip %TMPDIR%\mailsend-go_1.0.4_windows-%bits%bit.zip
-call :power_unzip %TMPDIR%\mailsend-go_1.0.4_windows-%bits%bit.zip mailsend-go.exe
+REM call :power_download https://github.com/muquit/mailsend-go/releases/download/v1.0.4/mailsend-go_1.0.4_windows-%bits%bit.zip %TMPDIR%\mailsend-go_1.0.4_windows-%bits%bit.zip
+REM call :power_unzip %TMPDIR%\mailsend-go_1.0.4_windows-%bits%bit.zip mailsend-go.exe
 
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: compress all DLL
@@ -234,14 +239,19 @@ if "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
   set bits=64
   set bitx=x64
 )
+goto :EOF
 
+:detect_admin_mode
+echo %HIGH%%b%%~0%END%%c% %* %END%
 :: check current user is local admin
 net localgroup administrators | findstr /B /C:%USERNAME% >NUL
 set ADMIN=%ERRORLEVEL%
 
-:: check batch is started with admin rights
-NET SESSION >NUL 2>&1
-set /a ADMIN=ADMIN+%ERRORLEVEL%
+set ADMIN=0
+:: check current user is local admin
+:: edit 20190606: not relevant
+REM net localgroup administrators | findstr /B /C:%USERNAME% >NUL
+REM set ADMIN=%ERRORLEVEL%
 
 IF %ADMIN% EQU 0 (
   echo Batch started with %HIGH%%y%ADMIN%END% rights
@@ -249,21 +259,31 @@ IF %ADMIN% EQU 0 (
   echo Batch started with %y%USER%END% rights
 )
 
+echo.
 ver | findstr /C:"Version 5.1" && set WindowsVersion=XP
 ver | findstr /C:"Version 6.1" && set WindowsVersion=7
 ver | findstr /C:"Version 10.0" && set WindowsVersion=10
-
 goto :EOF
 
 :install_busybox_symlink
+:: you need ADMIN privileges to create links... depends on DOMAIN settings maybe?
 echo %c%%~0%END%
 :: no mklink for XP so busybox will unfortunately create hardlinks for a total of 88MB
 IF [%WindowsVersion%]==[XP] busybox --install %INSTALLDIR% && goto :EOF
 
-:: mklink won't overwrite existing files
-FOR /f "usebackq" %%l IN (`busybox.exe --list`) DO 2>NUL (
-  mklink %%l.exe busybox.exe >NUL 2>&1
+IF %ADMIN% EQU 0 (
+  :: mklink won't overwrite existing files
+  FOR /f "usebackq" %%a IN (`busybox.exe --list`) DO 2>NUL (
+    mklink %%a.exe busybox.exe 2>NUL
+  )
+) ELSE (
+  echo Sorry: you need ADMIN privileges to create links.
+  echo Do you want to create hard links instead? Cost = 80MB
+  set /p choice=your choice: [N/y] 
 )
+
+IF [%choice%]==[y] busybox --install %INSTALLDIR%
+echo.
 goto :EOF
 
 :install_7zip 7z0000.exe
@@ -319,7 +339,7 @@ wget --referer=http://nirsoft.net %1 -O %2 --user=%3 --password=%4 2>&1 | findst
 goto :EOF
 
 :power_download url output [user pass]
-echo %c%%~0%END% %y%%1 %HIGH%%2%END%
+echo %c%%~0%END% %y%%1 %HIGH%%2%END% %3 %4
 set url=%1
 set file=%2
 set user=%3
@@ -328,17 +348,19 @@ for %%x in (wget.exe) do (set wget=%%~$PATH:x)
 IF EXIST .\wget.exe set wget=.\wget.exe
 
 IF NOT DEFINED file echo USAGE: %~nx0 url output [user pass]& exit /b
+echo.%HIGH%%k%
 IF EXIST %file% del /q %file% 2>NUL
 IF DEFINED wget (
-  wget %url% -O %file% --user=%user% --password=%password% 2>&1 | findstr /C:saved
+  wget --no-check-certificate %url% -O %file% --user=%user% --password=%password% 2>&1 | findstr /C:saved
 ) ELSE (
   powershell -executionPolicy bypass -Command "&{$client = new-object System.Net.WebClient ; $client.DownloadFile('%url%','%file%')}"
 )
+echo.%END%
 goto :EOF
 
 :power_unzip archive filter [keep]
-IF NOT EXIST %1 goto :EOF
 echo %HIGH%%c%%~0%END%%c% %1 %2
+IF NOT EXIST %1 goto :EOF
 set archive=%1
 set filter=%2
 set del=%3
@@ -426,4 +448,4 @@ echo %c%END%END%
 echo exit in 5 seconds...
 ping -n 6 localhost >NUL 2>&1
 popd
-exit
+pause
