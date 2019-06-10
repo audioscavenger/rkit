@@ -61,10 +61,10 @@ call :pre_requisites
 :: 7zip first, in any case we need 7z.exe
 set ver7zMaj=19
 set ver7zMin=00
-REM call :power_download https://downloads.sourceforge.net/project/sevenzip/7-Zip/%ver7zMaj%.%ver7zMin%/7z%ver7zMaj%%ver7zMin%%arch%.exe %TMPDIR%\7z%ver7zMaj%%ver7zMin%%arch%.exe
-REM call :install_7zip %TMPDIR%\7z%ver7zMaj%%ver7zMin%%arch%.exe
-REM call :setup_7zip_Extn
-REM call :copy_7z
+call :power_download https://downloads.sourceforge.net/project/sevenzip/7-Zip/%ver7zMaj%.%ver7zMin%/7z%ver7zMaj%%ver7zMin%%arch%.exe %TMPDIR%\7z%ver7zMaj%%ver7zMin%%arch%.exe
+call :install_7zip %TMPDIR%\7z%ver7zMaj%%ver7zMin%%arch%.exe
+call :setup_7zip_Extn
+call :copy_7z
 
 :: awk is included in busybox but it's a limited version
 call :power_download https://downloads.sourceforge.net/project/gnuwin32/gawk/3.1.6-1/gawk-3.1.6-1-bin.zip %TMPDIR%\gawk-3.1.6-1-bin.zip
