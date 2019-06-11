@@ -71,17 +71,21 @@ call :install_7zip %TMPDIR%\7z%ver7zMaj%%ver7zMin%%arch%.exe
 call :setup_7zip_Extn
 call :copy_7z
 
+call :power_download https://frippery.org/files/busybox/busybox.exe .\busybox.exe
+
 :: awk is included in busybox but it's a limited version
 call :power_download https://downloads.sourceforge.net/project/gnuwin32/gawk/3.1.6-1/gawk-3.1.6-1-bin.zip %TMPDIR%\gawk-3.1.6-1-bin.zip
 call :power_unzip %TMPDIR%\gawk-3.1.6-1-bin.zip gawk.exe
+
+:: busybox tail cannot process UNC paths
+call :power_download https://sourceforge.net/projects/tailforwin32/files/latest/download %TMPDIR%\tail.zip
+call :power_unzip %TMPDIR%\tail.zip tail.exe
 
 call :power_download https://curl.haxx.se/windows/dl-7.65.0_1/curl-7.65.0_1-win%bits%-mingw.zip %TMPDIR%\curl-7.65.0_1-win%bits%-mingw.zip
 call :power_unzip %TMPDIR%\curl-7.65.0_1-win%bits%-mingw.zip curl-ca-bundle.crt keep
 call :power_unzip %TMPDIR%\curl-7.65.0_1-win%bits%-mingw.zip curl.exe keep
 call :power_unzip %TMPDIR%\curl-7.65.0_1-win%bits%-mingw.zip libcurl-x%bits%.dll
 
-call :power_download https://frippery.org/files/busybox/busybox.exe .\busybox.exe
-call :install_busybox_symlink
 
 :: SysinternalsSuite includes PsTools which will trigger exaggerated/mental AVs/services that easily shoot false positives.
 call :power_download https://download.sysinternals.com/files/SysinternalsSuite.zip %TMPDIR%\SysinternalsSuite.zip
@@ -155,15 +159,15 @@ call :power_unzip %TMPDIR%\httpd-2.4.39-win%bits%-VC15.zip libssl-1_1%arch%.dll 
 call :power_unzip %TMPDIR%\httpd-2.4.39-win%bits%-VC15.zip openssl.exe
 
 :: File for Windows
-call :power_download http://downloads.sourceforge.net/gnuwin32/file-5.03-bin.zip %TMPDIR%\file-5.03-bin.zip
+call :power_download https://sourceforge.net/projects/gnuwin32/files/file/5.03/file-5.03-bin.zip/download %TMPDIR%\file-5.03-bin.zip
 call :power_unzip %TMPDIR%\file-5.03-bin.zip file.exe keep
 call :power_unzip %TMPDIR%\file-5.03-bin.zip magic1.dll keep
 call :power_unzip %TMPDIR%\file-5.03-bin.zip magic keep
 call :power_unzip %TMPDIR%\file-5.03-bin.zip magic.mgc
 move /y file.exe filemagic.exe
-call :power_download https://downloads.sourceforge.net/project/gnuwin32/file/4.26/file-4.26-dep.zip %TMPDIR%\file-4.26-dep.zip
-call :power_unzip %TMPDIR%\file-4.26-dep.zip regex2.dll keep
-call :power_unzip %TMPDIR%\file-4.26-dep.zip zlib1.dll
+call :power_download https://sourceforge.net/projects/gnuwin32/files/file/5.03/file-5.03-dep.zip/download %TMPDIR%\file-5.03-dep.zip
+call :power_unzip %TMPDIR%\file-5.03-dep.zip regex2.dll keep
+call :power_unzip %TMPDIR%\file-5.03-dep.zip zlib1.dll
 
 :: dig download may take some time to dl
 REM call :power_download ftp://ftp.isc.org/isc/bind9/cur/9.15/BIND9.15.0.%bitx%.zip %TMPDIR%\BIND9.15.0.%bitx%.zip
@@ -199,6 +203,10 @@ REM call :power_unzip %TMPDIR%\mailsend-go_1.0.4_windows-%bits%bit.zip mailsend-
 :: compress all DLL
 echo.
 upx *.dll
+
+echo.
+call :install_busybox_symlink
+
 echo.
 IF %ADMIN% EQU 0 (call :update_HKLM_path) ELSE (call :update_HKCU_path)
 
@@ -338,22 +346,24 @@ IF DEFINED VERBOSE echo wget --referer=http://nirsoft.net %1 -O %2 --user=%3 --p
 wget --referer=http://nirsoft.net %1 -O %2 --user=%3 --password=%4 2>&1 | findstr/C:saved
 goto :EOF
 
-:power_download url output [user pass]
+:power_download url outputFile [user pass]
 echo %c%%~0%END% %y%%1 %HIGH%%2%END% %3 %4
 set url=%1
-set file=%2
+set outputFile=%2
 set user=%3
 set password=%4
 for %%x in (wget.exe) do (set wget=%%~$PATH:x)
 IF EXIST .\wget.exe set wget=.\wget.exe
 
-IF NOT DEFINED file echo USAGE: %~nx0 url output [user pass]& exit /b
+IF NOT DEFINED outputFile echo USAGE: %~nx0 url output [user pass]& exit /b
 echo.%HIGH%%k%
-IF EXIST %file% del /q %file% 2>NUL
+IF EXIST %outputFile% del /q %outputFile% 2>NUL
 IF DEFINED wget (
-  wget --no-check-certificate %url% -O %file% --user=%user% --password=%password% 2>&1 | findstr /C:saved
+  echo wget --no-check-certificate %url% -O %outputFile% --user=%user% --password=%password% 2>&1 | findstr /C:saved
+  wget --no-check-certificate %url% -O %outputFile% --user=%user% --password=%password% 2>&1 | findstr /C:saved
 ) ELSE (
-  powershell -executionPolicy bypass -Command "&{$client = new-object System.Net.WebClient ; $client.DownloadFile('%url%','%file%')}"
+  echo powershell -executionPolicy bypass -Command "&{$client = new-object System.Net.WebClient ; $client.DownloadFile('%url%','%outputFile%')}"
+  powershell -executionPolicy bypass -Command "&{$client = new-object System.Net.WebClient ; $client.DownloadFile('%url%','%outputFile%')}"
 )
 echo.%END%
 goto :EOF
