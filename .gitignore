@@ -9,6 +9,8 @@
 !power_unzip.cmd
 !base64dec.cmd
 !base64enc.cmd
+!win10colors.cmd
+!win10colors-set.cmd
 !file.cmd
 !README.md
 !CHANGELOG.md
