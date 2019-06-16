@@ -1,4 +1,4 @@
-## rkit: Table of Contents
+## :scroll: rkit: Table of Contents
 - [rkit Windows Portable Resource Kit](#rkit-Windows-Portable-Resource-Kit)
 - [Presentation](#Presentation)
   - [Features](#Features)
@@ -32,7 +32,7 @@ This batch will operate in the folder it is placed in, or the folder passed as p
 It features mostly command line tools including busybox, SysinternalsSuite, Rkit2003 and 7zip among other things.
 Nirsoft tools are mostly GUI and therefore commented by default but you can easily modify this batch to include them and more.
 
-## Features
+## :sparkles: Features
 * MSDOS only (plus a bit of powershell to download the first tools)
 * Backward compatible down to windows XP SP3
 * Auto-select 32 or 64 bits binaries based on your system!
@@ -40,7 +40,7 @@ Nirsoft tools are mostly GUI and therefore commented by default but you can easi
 * Colors! (since Win 10)
 * DLL compression with UPX
 
-## What is downloaded?
+## :inbox_tray: What is downloaded?
 - [x] 7zip _19.00_
 - [x] apache benchmark _2.4.39_
 - [x] blat mail _3.2.19_
@@ -60,14 +60,14 @@ Nirsoft tools are mostly GUI and therefore commented by default but you can easi
 - [x] wget _1.20.3_
 - [x] Windows Server 2003 Resource Kit Tools
 
-## What is installed?
+## :computer: What is installed?
 + install 7zip
 
-## What is Modified?
+## :wrench: What is Modified?
 + add/update 7zip file associations for local user  (/!\ ==> or ALL USERS   if started as ADMIN!)
 + update PATH variable for local user (prepend)     (/!\ ==> or SYSTEM PATH if started as ADMIN! (append))
 
-## Disclaimer About Anti-Virus Warnings
+## :warning: Disclaimer About Anti-Virus Warnings
 Many tools included (such as password recovery/sniffer and even Pskill.exe from Microsoft) are considered 
 harmful/unwanted by exaggerated/mental AVs/services such as Sophos, and will shoot false positives.
 Prepare yourself to explain these alerts to your IT bff.
@@ -117,15 +117,15 @@ Long story short, you *will* receive AV false alarms on these files:
 
 # Installation
 
-## Installation Warning
+## :grey_exclamation: Installation Warning
 Warning: starting this batch with ADMIN rights will alter the SYSTEM PATH value. Read carefully what it does.
 
-## Installation in USER mode
+## :baby: Installation in USER mode
 1. start it
 2. logoff / log back in (to reload the USER PATH environment)
 3. enjoy
 
-## Installation in ADMIN mode
+## :cop: Installation in ADMIN mode
 1. start it
 2. enjoy
 
@@ -136,7 +136,7 @@ Warning: starting this batch with ADMIN rights will alter the SYSTEM PATH value.
 
 # Compatibility
 
-## Windows version
+## :memo: Windows version
 This batch *should* be compatible down to:
 * Windows XP SP3
 * Windows Server 2000
@@ -144,13 +144,13 @@ This batch *should* be compatible down to:
 
 Refer to [KB article 317949](http://support.microsoft.com/default.aspx?scid=kb;en-us;317949) if you need the gory details exactly why you must NEVER run the original Windows XP or SP1.
 
-## Pre-Requisites
+## :memo: Pre-Requisites
 * setx (included since XP SP3)
 * powershell 2.0 (KB for XP/2000: install [Windows Management Framework](https://support.microsoft.com/en-us/help/968929/))
 * mklink (included since Seven - will be circumvented on XP/2000 at disk cost)
 
 
-# TODO List
+# :clipboard: TODO List
 * [x] file magic
 * [x] ab
 * [x] openssl
@@ -174,11 +174,11 @@ Refer to [KB article 317949](http://support.microsoft.com/default.aspx?scid=kb;e
 * [ ] blat mail 32 or 64 (only 64 now, but is it useful since )
 * [ ] Please be my guest
 
-# See Also
+# :point_right: See Also
 
 Linux/UX ultra complete profile [exploit](https://github.com/audioscavenger/exploit)
 
-# License (is GNU GPL3)
+# :ribbon: License (is GNU GPL3)
 
                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
