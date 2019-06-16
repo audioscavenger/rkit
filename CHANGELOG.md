@@ -1,9 +1,19 @@
 ## Contents
+- [v1.4.0](#v140)
 - [v1.2.1](#v121)
 - [v1.2.0](#v120)
 - [v1.1.0](#v110)
 - [v1.0.1](#v101)
 - [v1.0.0](#v100)
+
+* v1.4.0
+  * enabled UnxUtils first, sinc busybox has not been fully tested on Windows, obviously
+  * enabled netcat
+  * enabled dig
+  * bug fixes
+  * updated README
+  * updated CHANGELOG
+  * first release!
 
 * v1.2.1
   * added netcat

@@ -43,22 +43,24 @@ Nirsoft tools are mostly GUI and therefore commented by default but you can easi
 ## :inbox_tray: What is downloaded?
 - [x] 7zip _19.00_
 - [x] apache benchmark _2.4.39_
-- [x] blat mail _3.2.19_
+- [ ] blat mail _3.2.19_
 - [x] busybox _latest_
 - [x] curl _7.65_
 - [x] dig  _9.15.0_
 - [x] dirhash _latest_
 - [x] file _5.03_
 - [x] gawk _3.1.6-1_
-- [x] mailsend-go _1.0.4_
+- [ ] mailsend-go _1.0.4_
 - [x] netcat _1.1.1_
+- [ ] NirSoft _latest_
 - [x] openSSL _1.1.1c_
 - [x] SysinternalsSuite _latest_
 - [x] tcpdump _latest_
+- [x] UnxUtils _latest_
 - [x] upx _3.95w_
-- [x] XMLStarlet _latest_
 - [x] wget _1.20.3_
-- [x] Windows Server 2003 Resource Kit Tools
+- [ ] Windows Server 2003 Resource Kit Tools
+- [x] XMLStarlet _latest_
 
 ## :computer: What is installed?
 + install 7zip
