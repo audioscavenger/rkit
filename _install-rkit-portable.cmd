@@ -1,9 +1,12 @@
+echo TODO: make lin2xml and dig compatible because of lib2xml.dll used for both but different 
+
+
 ::   install-rkit-portable  Copyright (C) <2019>  <audioscavenger@it-cooking.com>
 ::   This program comes with ABSOLUTELY NO WARRANTY;
 ::   This is free software, and you are welcome to redistribute it
 ::   under certain conditions; https://www.gnu.org/licenses/gpl-3.0.html
 :: ----------------------------------------------------------------------------------------------------------------------
-:: version=1.4.0
+@set version=1.4.3
 :: ----------------------------------------------------------------------------------------------------------------------
 :: This batch purpose is to create a portable Resource Kit folder with UNIX-like commands for your convenience.
 :: It features mostly command line tools including busybox, SysinternalsSuite, Rkit2003 and 7zip among many.
@@ -23,13 +26,16 @@
 :: - [x] busybox _latest_
 :: - [x] curl _7.65_
 :: - [x] dig  _9.15.0_
+:: - [x] msvcr110.dll  _as needed_
 :: - [x] dirhash _latest_
 :: - [x] file _5.03_
 :: - [x] gawk _3.1.6-1_
 :: - [ ] mailsend-go _1.0.4_
 :: - [x] netcat _1.1.1_
 :: - [ ] NirSoft _latest_
+:: - [x] NirCmd _latest_
 :: - [x] openSSL _1.1.1c_
+:: - [x] Pdftk free _1.41_
 :: - [x] SysinternalsSuite _latest_
 :: - [x] tcpdump _latest_
 :: - [x] UnxUtils _latest_
@@ -46,32 +52,41 @@
 :: [x] download wget first to get rid of powershell asap
 :: [ ] use 7zip portable instead
 :: [ ] detect UNC path because mklink won't work
-:: [ ] ?
+:: [ ] https://www.dostips.com/forum/viewtopic.php?f=3&t=3428
 :: ----------------------------------------------------------------------------------------------------------------------
 
 @echo OFF
 set INSTALLDIR=%1
-set TMPFILE=%TMP%\%~n0.txt
-set TMPDIR=%TMP%
+set TMPFILE=%TMP%\%~n0.tmp
+set LOGFILE=.\%~n0.log
 set VERBOSE=
+set RESTART=n
 verify on
+set COUNTER=0
+set SUCCESS=0
+set fullyInstalled=
+title %0 %version% started %DATE% at %TIME%
+MODE CON: COLS=150 LINES=50
 
 IF NOT DEFINED INSTALLDIR set INSTALLDIR="%~dp0"
-IF NOT EXIST %INSTALLDIR%\ md %INSTALLDIR%
+IF NOT EXIST %INSTALLDIR% md %INSTALLDIR%
+IF NOT EXIST %INSTALLDIR% call :error mkdir - cannot create %INSTALLDIR% & goto :end
 pushd %INSTALLDIR%
 
 call :set_colors
-call :pre_requisites
 call :detect_admin_mode
+call :pre_requisites
+call :startup
 
-:: debug: purge everything
-:: del *.cab *.upx *.exe *.dll *.cfg *.scr *.msi *.vbs *.ocx *.ini *.inf *.sys *.chm *.hlp *.txt *.adm *.doc *.htm *.lmk *.msc *.cnt *.reg *.xsl *.bat *.config *.7z *.zip
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:: STANDARD ZONE ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 :: UnxUtils are supposedly deprecated since the win32 port of busybox, however:
 :: - busybox tail cannot process UNC paths
 :: - you are using UNC path, cannot use mklink
-call :power_download https://downloads.sourceforge.net/project/unxutils/unxutils/current/UnxUtils.zip %TMPDIR%\UnxUtils.zip
-call :power_unzip %TMPDIR%\UnxUtils.zip *.exe
+call :power_download https://downloads.sourceforge.net/project/unxutils/unxutils/current/UnxUtils.zip %TEMP%\UnxUtils.zip
+call :power_unzip %TEMP%\UnxUtils.zip *.exe
 
 :: wget is included in busybox but it's a limited version
 call :power_download https://eternallybored.org/misc/wget/1.20.3/%bits%/wget.exe .\wget.exe
@@ -79,103 +94,130 @@ call :power_download https://eternallybored.org/misc/wget/1.20.3/%bits%/wget.exe
 :: 7zip first, in any case we need 7z.exe
 set ver7zMaj=19
 set ver7zMin=00
-call :power_download https://downloads.sourceforge.net/project/sevenzip/7-Zip/%ver7zMaj%.%ver7zMin%/7z%ver7zMaj%%ver7zMin%%arch%.exe %TMPDIR%\7z%ver7zMaj%%ver7zMin%%arch%.exe
-call :install_7zip %TMPDIR%\7z%ver7zMaj%%ver7zMin%%arch%.exe
+call :power_download https://downloads.sourceforge.net/project/sevenzip/7-Zip/%ver7zMaj%.%ver7zMin%/7z%ver7zMaj%%ver7zMin%%arch%.exe %TEMP%\7z%ver7zMaj%%ver7zMin%%arch%.exe
+call :install_7zip %TEMP%\7z%ver7zMaj%%ver7zMin%%arch%.exe
 call :setup_7zip_Extn
 call :copy_7z
 
 call :power_download https://frippery.org/files/busybox/busybox.exe .\busybox.exe
 
 :: awk is included in busybox but it's a limited version
-call :power_download https://downloads.sourceforge.net/project/gnuwin32/gawk/3.1.6-1/gawk-3.1.6-1-bin.zip %TMPDIR%\gawk-3.1.6-1-bin.zip
-call :power_unzip %TMPDIR%\gawk-3.1.6-1-bin.zip gawk.exe
-
-call :power_download https://curl.haxx.se/windows/dl-7.65.0_1/curl-7.65.0_1-win%bits%-mingw.zip %TMPDIR%\curl-7.65.0_1-win%bits%-mingw.zip
-call :power_unzip %TMPDIR%\curl-7.65.0_1-win%bits%-mingw.zip curl-ca-bundle.crt keep
-call :power_unzip %TMPDIR%\curl-7.65.0_1-win%bits%-mingw.zip curl.exe keep
-call :power_unzip %TMPDIR%\curl-7.65.0_1-win%bits%-mingw.zip libcurl-x%bits%.dll
-
-
-:: SysinternalsSuite includes PsTools which will trigger exaggerated/mental AVs/services that easily shoot false positives.
-call :power_download https://download.sysinternals.com/files/SysinternalsSuite.zip %TMPDIR%\SysinternalsSuite.zip
-call :7unzip %TMPDIR%\SysinternalsSuite.zip .\
+call :power_download https://downloads.sourceforge.net/project/gnuwin32/gawk/3.1.6-1/gawk-3.1.6-1-bin.zip %TEMP%\gawk-3.1.6-1-bin.zip
+call :power_unzip %TEMP%\gawk-3.1.6-1-bin.zip gawk.exe
 
 :: XMLStarlet Command Line XML Toolkit
-call :power_download https://sourceforge.net/projects/xmlstar/files/latest/download %TMPDIR%\xmlstarlet-win32.zip
-call :power_unzip %TMPDIR%\xmlstarlet-win32.zip xml.exe
+call :power_download https://sourceforge.net/projects/xmlstar/files/latest/download %TEMP%\xmlstarlet-win32.zip
+call :power_unzip %TEMP%\xmlstarlet-win32.zip xml.exe
+
+:: BIND9 contains dig
+call :power_download https://downloads.isc.org/isc/bind9/9.14.3/BIND9.14.3.%bitx%.zip %TEMP%\BIND9.zip
+call :power_unzip %TEMP%\BIND9.zip dig.exe keep
+call :power_unzip %TEMP%\BIND9.zip *.dll
+:: BIND9 libxml2.dll is in conflict with the one from xmllint, but xmllint's works with both
+:: BIND9 needs MSVC++ 2012 redistribuable
+IF NOT DEFINED msvcr110 (
+  call :power_download %msvc_url% %TEMP%\msvcr110.zip
+  call :power_unzip %TEMP%\msvcr110.zip msvcr110.dll
+)
+
+:: xmllint - needed to get latest curl version; couldn't extract Xpath with xmlstarlet coz curl html page is broken (too loose)
+call :power_download https://sourceforge.net/projects/gnuwin32/files/libxml/2.4.12-1/libxml2-2.4.12-bin.zip/download %TEMP%\libxml2-win32.zip
+call :power_unzip %TEMP%\libxml2-win32.zip libxml2.dll keep
+call :power_unzip %TEMP%\libxml2-win32.zip *.exe
+
+:: curl guys simply remove the link after each new version, thanks
+REM call :power_download https://curl.haxx.se/windows/dl-7.65.0_1/curl-7.65.0_1-win%bits%-mingw.zip %TEMP%\curl-7.65.0_1-win%bits%-mingw.zip
+REM call :power_download https://curl.haxx.se/windows/dl-7.65.1_3/curl-7.65.1_3-win%bits%-mingw.zip %TEMP%\curl-7.65.0_1-win%bits%-mingw.zip
+
+:: auto-detection of curl version
+curl https://curl.haxx.se/windows/ >%TMPFILE% 2>NUL
+REM echo cat //*[@class="windl"][1]/a[1]/@href | xmllint --shell --nowarning --noblanks --html --recover %TMPFILE%
+:: <href>dl-7.65.1_3/curl-7.65.1_3-win64-mingw.zip</href>
+echo cat //*[@class="windl"]/a[1]/@href | xmllint --shell --nowarning --noblanks --html --recover %TMPFILE% | gawk -F[^<^>] "{print $3}" >%TMPFILE%.2
+:: dl-7.65.1_3/curl-7.65.1_3-win64-mingw.zip
+:: dl-7.65.1_3/curl-7.65.1_3-win32-mingw.zip
+for /f %%a in ('findstr win%bits% %TMPFILE%.2') do set url=%%a
+
+
+call :power_download https://curl.haxx.se/windows/%url% %TEMP%\curl-mingw.zip
+call :power_unzip %TEMP%\curl-mingw.zip curl-ca-bundle.crt keep
+call :power_unzip %TEMP%\curl-mingw.zip curl.exe keep
+call :power_unzip %TEMP%\curl-mingw.zip libcurl-x%bits%.dll
+
+:: SysinternalsSuite includes PsTools which will trigger exaggerated/mental AVs/services that easily shoot false positives.
+call :power_download https://download.sysinternals.com/files/SysinternalsSuite.zip %TEMP%\SysinternalsSuite.zip
+call :7unzip %TEMP%\SysinternalsSuite.zip .\
 
 :: UPX is a free, portable, extendable, high-performance executable packer for several executable formats.
-call :power_download https://github.com/upx/upx/releases/download/v3.95/upx-3.95-win%bits%.zip %TMPDIR%\upx-3.95-win%bits%.zip
-call :power_unzip %TMPDIR%\upx-3.95-win%bits%.zip upx.exe
+call :power_download https://github.com/upx/upx/releases/download/v3.95/upx-3.95-win%bits%.zip %TEMP%\upx-3.95-win%bits%.zip
+call :power_unzip %TEMP%\upx-3.95-win%bits%.zip upx.exe
 
 :: tcpdump for windows
 call :power_download "http://chiselapp.com/user/rkeene/repository/tcpdump-windows-wrapper/raw/tcpdump.exe?name=2e3d4d01fa597e1f50ba3ead8f18b8eeacb83812" .\tcpdump.exe
 
 :: Directory checksum tool
-call :power_download https://www.idrix.fr/Root/Samples/DirHash%arch%.zip %TMPDIR%\DirHash%arch%.zip
-call :power_unzip %TMPDIR%\DirHash%arch%.zip dirhash.exe
+call :power_download https://www.idrix.fr/Root/Samples/DirHash%arch%.zip %TEMP%\DirHash%arch%.zip
+call :power_unzip %TEMP%\DirHash%arch%.zip dirhash.exe
 
 :: apache benchmark tool is very basic, and while it will give you a solid idea of some performance, it is a bad idea to only depend on it if you plan to have your site exposed to serious stress in production.
-call :power_download https://home.apache.org/~steffenal/VC15/binaries/httpd-2.4.39-win%bits%-VC15.zip %TMPDIR%\httpd-2.4.39-win%bits%-VC15.zip
-call :power_unzip %TMPDIR%\httpd-2.4.39-win%bits%-VC15.zip ab.exe keep
-call :power_unzip %TMPDIR%\httpd-2.4.39-win%bits%-VC15.zip abs.exe keep
-call :power_unzip %TMPDIR%\httpd-2.4.39-win%bits%-VC15.zip libcrypto-1_1%arch%.dll keep
-call :power_unzip %TMPDIR%\httpd-2.4.39-win%bits%-VC15.zip libssl-1_1%arch%.dll keep
-call :power_unzip %TMPDIR%\httpd-2.4.39-win%bits%-VC15.zip openssl.exe
+call :power_download https://home.apache.org/~steffenal/VC15/binaries/httpd-2.4.39-win%bits%-VC15.zip %TEMP%\httpd-2.4.39-win%bits%-VC15.zip
+call :power_unzip %TEMP%\httpd-2.4.39-win%bits%-VC15.zip ab.exe keep
+call :power_unzip %TEMP%\httpd-2.4.39-win%bits%-VC15.zip abs.exe keep
+call :power_unzip %TEMP%\httpd-2.4.39-win%bits%-VC15.zip libcrypto-1_1%arch%.dll keep
+call :power_unzip %TEMP%\httpd-2.4.39-win%bits%-VC15.zip libssl-1_1%arch%.dll keep
+call :power_unzip %TEMP%\httpd-2.4.39-win%bits%-VC15.zip openssl.exe
 
 :: File for Windows
-call :power_download https://sourceforge.net/projects/gnuwin32/files/file/5.03/file-5.03-bin.zip/download %TMPDIR%\file-5.03-bin.zip
-call :power_unzip %TMPDIR%\file-5.03-bin.zip file.exe keep
-call :power_unzip %TMPDIR%\file-5.03-bin.zip magic1.dll keep
-call :power_unzip %TMPDIR%\file-5.03-bin.zip magic keep
-call :power_unzip %TMPDIR%\file-5.03-bin.zip magic.mgc
+call :power_download https://sourceforge.net/projects/gnuwin32/files/file/5.03/file-5.03-bin.zip/download %TEMP%\file-5.03-bin.zip
+call :power_unzip %TEMP%\file-5.03-bin.zip file.exe keep
+call :power_unzip %TEMP%\file-5.03-bin.zip magic1.dll keep
+call :power_unzip %TEMP%\file-5.03-bin.zip magic keep
+call :power_unzip %TEMP%\file-5.03-bin.zip magic.mgc
 move /y file.exe filemagic.exe
-call :power_download https://sourceforge.net/projects/gnuwin32/files/file/5.03/file-5.03-dep.zip/download %TMPDIR%\file-5.03-dep.zip
-call :power_unzip %TMPDIR%\file-5.03-dep.zip regex2.dll keep
-call :power_unzip %TMPDIR%\file-5.03-dep.zip zlib1.dll
+call :power_download https://sourceforge.net/projects/gnuwin32/files/file/5.03/file-5.03-dep.zip/download %TEMP%\file-5.03-dep.zip
+call :power_unzip %TEMP%\file-5.03-dep.zip regex2.dll keep
+call :power_unzip %TEMP%\file-5.03-dep.zip zlib1.dll
 
 :: Netcat for NT is the tcp/ip "Swiss Army knife" that never made it into any of the resource kits
 :: it's powerful enough to be included in some natsy malware packages so it may trigger your AV
 :: https://github.com/diegocr/netcat
 :: example use: nc -l -p 23 -t -e cmd.exe
-call :power_download https://joncraton.org/files/nc111nt.zip %TMPDIR%\nc111nt.zip
-call :7unzip %TMPDIR%\nc111nt.zip .\ nc nc.exe
+call :power_download https://joncraton.org/files/nc111nt.zip %TEMP%\nc111nt.zip
+call :7unzip %TEMP%\nc111nt.zip .\ nc nc.exe
 
-:: dig download may take some time to dl
-call :power_download ftp://ftp.isc.org/isc/bind9/cur/9.15/BIND9.15.0.%bitx%.zip %TMPDIR%\BIND9.15.0.%bitx%.zip
-call :power_unzip %TMPDIR%\BIND9.15.0.%bitx%.zip dig.exe keep
-call :power_unzip %TMPDIR%\BIND9.15.0.%bitx%.zip libbind9.dll keep
-call :power_unzip %TMPDIR%\BIND9.15.0.%bitx%.zip libdns.dll keep
-call :power_unzip %TMPDIR%\BIND9.15.0.%bitx%.zip libirs.dll keep
-call :power_unzip %TMPDIR%\BIND9.15.0.%bitx%.zip libisc.dll keep
-call :power_unzip %TMPDIR%\BIND9.15.0.%bitx%.zip libisccfg.dll keep
-call :power_unzip %TMPDIR%\BIND9.15.0.%bitx%.zip libxml2.dll
+:: pdftk 2.02 = https://www.pdflabs.com/tools/pdftk-the-pdf-toolkit/pdftk_server-2.02-win-setup.exe
+:: unfortunately this installer cannot be unzipped
+call :power_download "https://portableapps.com/redirect/?a=PDFTKBuilderPortable&s=s&d=pa&f=PDFTKBuilderPortable_3.10.0_English.paf.exe" %TEMP%\PDFTKBuilderPortable_3.10.0_English.paf.exe
+call :7unzip %TEMP%\PDFTKBuilderPortable_3.10.0_English.paf.exe .\ nopassword pdftkbuilder\
 
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: OPTIONAL ZONE ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
 :: Nirsoft tools are not included by default but you can uncomment this section if you like.
 :: Note that some tools such as password viewers will trigger exaggerated/mental AVs/services that easily shoot false positives.
-REM call :wget_nirsoft http://nirsoft.net/packages/passrecenc.zip %TMPDIR%\passrecenc.zip
+REM call :wget_nirsoft http://nirsoft.net/packages/passrecenc.zip %TEMP%\passrecenc.zip
 :: warning: tons of false AV alarms for each exe in passreccommandline.zip
-REM call :7unzip %TMPDIR%\passrecenc.zip .\ nirsoft123!
-REM call :wget_nirsoft http://www.nirsoft.net/protected_downloads/passreccommandline.zip %TMPDIR%\passreccommandline.zip download nirsoft123!
-REM call :7unzip %TMPDIR%\passreccommandline.zip .\ nirsoft123!
-REM call :wget_nirsoft http://nirsoft.net/packages/systools.zip %TMPDIR%\systools.zip
-REM call :7unzip %TMPDIR%\systools.zip .\
-REM call :wget_nirsoft http://nirsoft.net/packages/brtools.zip %TMPDIR%\brtools.zip
-REM call :7unzip %TMPDIR%\brtools.zip .\
-REM call :wget_nirsoft http://nirsoft.net/packages/progtools.zip %TMPDIR%\progtools.zip
-REM call :7unzip %TMPDIR%\progtools.zip .\
-REM call :wget_nirsoft http://nirsoft.net/packages/networktools.zip %TMPDIR%\networktools.zip
-REM call :7unzip %TMPDIR%\networktools.zip .\
-REM call :wget_nirsoft http://nirsoft.net/packages/x64tools.zip %TMPDIR%\x64tools.zip
-REM call :7unzip %TMPDIR%\x64tools.zip .\ nirsoft123!
+REM call :7unzip %TEMP%\passrecenc.zip .\ nirsoft123!
+REM call :wget_nirsoft http://www.nirsoft.net/protected_downloads/passreccommandline.zip %TEMP%\passreccommandline.zip download nirsoft123!
+REM call :7unzip %TEMP%\passreccommandline.zip .\ nirsoft123!
+REM call :wget_nirsoft http://nirsoft.net/packages/systools.zip %TEMP%\systools.zip
+REM call :7unzip %TEMP%\systools.zip .\
+REM call :wget_nirsoft http://nirsoft.net/packages/brtools.zip %TEMP%\brtools.zip
+REM call :7unzip %TEMP%\brtools.zip .\
+REM call :wget_nirsoft http://nirsoft.net/packages/progtools.zip %TEMP%\progtools.zip
+REM call :7unzip %TEMP%\progtools.zip .\
+REM call :wget_nirsoft http://nirsoft.net/packages/networktools.zip %TEMP%\networktools.zip
+REM call :7unzip %TEMP%\networktools.zip .\
+REM call :wget_nirsoft http://nirsoft.net/packages/x64tools.zip %TEMP%\x64tools.zip
+REM call :7unzip %TEMP%\x64tools.zip .\ nirsoft123!
+call :wget_nirsoft https://nirsoft.net/utils/nircmd%arch%.zip %TEMP%\nircmd%arch%.zip
+call :7unzip %TEMP%\nircmd%arch%.zip .\
 
 :: Windows Server 2003 Resource Kit Tools used to be a must have but I don't remember a time when I used any of their tools
-REM call :power_download https://download.microsoft.com/download/8/e/c/8ec3a7d8-05b4-440a-a71e-ca3ee25fe057/rktools.exe %TMPDIR%\rktools.exe
-REM call :7unzip %TMPDIR%\rktools.exe %TMPDIR%\
-REM call :7unzip %TMPDIR%\rktools.msi .\
+REM call :power_download https://download.microsoft.com/download/8/e/c/8ec3a7d8-05b4-440a-a71e-ca3ee25fe057/rktools.exe %TEMP%\rktools.exe
+REM call :7unzip %TEMP%\rktools.exe %TEMP%\
+REM call :7unzip %TEMP%\rktools.msi .\
 
 :: TODO: activestate perl v5.8.4 built for MSWin32-x86-multi-thread - I use just 2 files to get it work (without modules or cpan etc indeed) - total = 824KB
 :: TODO: it seems to be possible with strawberry perl 5.30 but the zipfile is 144MB, and the files needed total 5MB, down to 1.7MB with upx *.dll
@@ -188,32 +230,35 @@ REM call :7unzip %TMPDIR%\rktools.msi .\
 
 :: Jad - the fast Java Decompiler - http://kpdus.com/jad.html - example: jad -p example1.class >myexm1.java
 :: TODO: download link file is corrupt
-:: call :power_download http://kpdus.com/jad/winnt/jadnt158.zip %TMPDIR%\jadnt158.zip
-:: call :power_unzip %TMPDIR%\jadnt158.zip jad.exe
+:: call :power_download http://kpdus.com/jad/winnt/jadnt158.zip %TEMP%\jadnt158.zip
+:: call :power_unzip %TEMP%\jadnt158.zip jad.exe
 
 :: Blat - A Windows (32 & 64 bit) command line SMTP mailer. Use it to automatically eMail logs, the contents of a html FORM, or whatever else you need to send. 
 :: TODO: handle the special case url for blat32
 REM "https://downloads.sourceforge.net/project/blat/Blat Full Version/32 bit versions/Win2000 and newer/blat3219_32.full.zip"
-REM call :power_download "https://downloads.sourceforge.net/project/blat/Blat Full Version/64 bit versions/blat3219_64.full.zip" %TMPDIR%\blat3219_64.full.zip
-REM call :power_unzip %TMPDIR%\blat3219_64.full.zip blat.exe keep
-REM call :power_unzip %TMPDIR%\blat3219_64.full.zip blat.dll
+REM call :power_download "https://downloads.sourceforge.net/project/blat/Blat Full Version/64 bit versions/blat3219_64.full.zip" %TEMP%\blat3219_64.full.zip
+REM call :power_unzip %TEMP%\blat3219_64.full.zip blat.exe keep
+REM call :power_unzip %TEMP%\blat3219_64.full.zip blat.dll
 
 :: mailsend-go is a multi-platform command line tool to send mail via SMTP protocol - StartTLS will be used if server supports it
 :: https://github.com/muquit/mailsend-go
 :: example: mailsend-go -info -smtp smtp.gmail.com -port 587
-REM call :power_download https://github.com/muquit/mailsend-go/releases/download/v1.0.4/mailsend-go_1.0.4_windows-%bits%bit.zip %TMPDIR%\mailsend-go_1.0.4_windows-%bits%bit.zip
-REM call :power_unzip %TMPDIR%\mailsend-go_1.0.4_windows-%bits%bit.zip mailsend-go.exe
+REM call :power_download https://github.com/muquit/mailsend-go/releases/download/v1.0.4/mailsend-go_1.0.4_windows-%bits%bit.zip %TEMP%\mailsend-go_1.0.4_windows-%bits%bit.zip
+REM call :power_unzip %TEMP%\mailsend-go_1.0.4_windows-%bits%bit.zip mailsend-go.exe
 
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: compress all DLL
 echo.
 IF EXIST .\upx.exe upx *.dll
 
+:: create Ux missing binaries from busybox
 echo.
 call :install_busybox_symlink
-
+pause
+:: update HKLM or HKCU
 echo.
 IF %ADMIN% EQU 0 (call :update_HKLM_path) ELSE (call :update_HKCU_path)
+pause
 
 :: echo systempropertiesadvanced.exe
 goto :end
@@ -243,7 +288,24 @@ IF NOT DEFINED powershell call :error powershell NOT FOUND& goto :end
 for %%x in (setx.exe) do (set setx=%%~$PATH:x)
 IF NOT DEFINED setx call :error setx NOT FOUND& goto :end
 
+for %%x in (msvcr110.dll) do (set msvcr110=%%~$PATH:x)
+IF NOT DEFINED msvcr110 echo WARNING: MSVC 2012 redistributable is not installed
+IF NOT DEFINED msvcr110 call :set_msvc_url
+
 for %%x in (wget.exe) do (set wget=%%~$PATH:x)
+goto :EOF
+
+:set_msvc_url
+:: http://www.dlldownloader.com/msvcr110-dll/#Method-2-Copying-the-Msvcr110dll-File-to-the-Software-File-Folder
+IF %bits% EQU 32 (
+set msvc_url=http://www.dlldownloader.com/msvcr110-dll/download/e225e0eb1de90f5aa3efb1fb9b3e5e51/
+) ELSE (
+set msvc_url=http://www.dlldownloader.com/msvcr110-dll/download/e481de48e6b9658e8c761b2447591a1f/
+)
+goto :EOF
+
+:detect_admin_mode
+echo %HIGH%%b%%~0%END%%c% %* %END%
 
 set bits=32
 set bitx=x86
@@ -252,10 +314,7 @@ if "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
   set bits=64
   set bitx=x64
 )
-goto :EOF
 
-:detect_admin_mode
-echo %HIGH%%b%%~0%END%%c% %* %END%
 :: check current user is local admin
 net localgroup administrators | findstr /B /C:%USERNAME% >NUL
 set ADMIN=%ERRORLEVEL%
@@ -272,45 +331,69 @@ IF %ADMIN% EQU 0 (
   echo Batch started with %y%USER%END% rights
 )
 
+:: https://en.wikipedia.org/wiki/Ver_(command)
 echo.
 ver | findstr /C:"Version 5.1" && set WindowsVersion=XP
+ver | findstr /C:"Version 5.2" && set WindowsVersion=2003
+ver | findstr /C:"Version 6.0" && set WindowsVersion=Vista
 ver | findstr /C:"Version 6.1" && set WindowsVersion=7
+ver | findstr /C:"Version 6.2" && set WindowsVersion=8
+ver | findstr /C:"Version 6.3" && set WindowsVersion=8.1
+ver | findstr /C:"Version 6.4" && set WindowsVersion=10
 ver | findstr /C:"Version 10.0" && set WindowsVersion=10
 goto :EOF
 
 :install_busybox_symlink
 :: you need ADMIN privileges to create links... depends on DOMAIN settings maybe?
+findstr /C:"%~0 OK" %LOGFILE% >NUL 2>&1 && echo %g%%~0 OK && goto :EOF
 echo %c%%~0%END%
-:: no mklink for XP so busybox will unfortunately create hardlinks for a total of 88MB
-IF [%WindowsVersion%]==[XP] busybox --install %INSTALLDIR% && goto :EOF
+call :counterInc
 
-IF %ADMIN% EQU 0 (
-  :: mklink won't overwrite existing files
-  FOR /f "usebackq" %%a IN (`busybox.exe --list`) DO 2>NUL (
-    mklink %%a.exe busybox.exe 2>NUL
-  )
+set choice=n
+:: no mklink for XP so busybox will unfortunately create hardlinks for a total of 88MB
+IF [%WindowsVersion%]==[XP] (
+  busybox --install %INSTALLDIR%
 ) ELSE (
-  echo Sorry: you need ADMIN privileges to create links.
-  echo Do you want to create hard links instead? Cost = 80MB
-  set /p choice=your choice: [N/y] 
+  IF %ADMIN% EQU 0 (
+    :: mklink won't overwrite existing files
+    FOR /f "usebackq" %%a IN (`busybox.exe --list`) DO 2>NUL (
+      mklink %%a.exe busybox.exe 2>NUL
+    )
+  ) ELSE (
+    echo Sorry: you need ADMIN privileges to create links.
+    echo Do you want to create hard links instead? Cost = 80MB
+    set /p choice=your choice: [N/y] 
+  )
 )
 
 IF [%choice%]==[y] busybox --install %INSTALLDIR%
 echo.
+
+echo %~0 OK>>%LOGFILE%
+call :successInc
 goto :EOF
 
 :install_7zip 7z0000.exe
+findstr /C:"%~0 OK" %LOGFILE% >NUL 2>&1 && echo %g%%~0 OK && goto :EOF
 echo %c%%~0 %1%END%
+call :counterInc
+
 IF NOT EXIST %1 goto :EOF
+
 echo start /wait %1 /S
 start /wait %1 /S
 del /q %1 2>NUL
 echo Installing 7zip - %HIGH%%g%DONE%END%
+
+echo %~0 OK>>%LOGFILE%
 goto :EOF
 
 :setup_7zip_Extn
-:: setup 7zip association for all users if batch executed by local admin
+findstr /C:"%~0 OK" %LOGFILE% >NUL 2>&1 && echo %g%%~0 OK && goto :EOF
+echo %c%%~0 %1%END%
+call :counterInc
 
+:: setup 7zip association for all users if batch executed by local admin
 IF %ADMIN% EQU 0 (
   SET SC=HKLM\SOFTWARE\Classes
   echo Setup 7zip file extensions: %HIGH%%y%ALL USERS%END%
@@ -337,31 +420,49 @@ FOR %%x IN (%Extn%) DO (
 )
 echo.%END%
 echo Setup 7zip file extensions: %HIGH%%g%DONE%END%
+
+echo %~0 OK>>%LOGFILE%
+call :successInc
 goto :EOF
 
 :copy_7z
+findstr /C:"%~0 OK" %LOGFILE% >NUL 2>&1 && echo %g%%~0 OK && goto :EOF
 echo %c%%~0%END%
+call :counterInc
+
 copy /y "%ProgramFiles%\7-Zip\7z.exe" .\
 copy /y "%ProgramFiles%\7-Zip\7z.dll" .\
+
+echo %~0 OK>>%LOGFILE%
+call :successInc
 goto :EOF
 
 :wget_nirsoft url output [user pass]
+findstr /C:"%~0 OK" %LOGFILE% >NUL 2>&1 && echo %g%%~0 OK && goto :EOF
 echo %c%%~0 %1%END%
+call :counterInc
+
 IF DEFINED VERBOSE echo wget --referer=http://nirsoft.net %1 -O %2 --user=%3 --password=%4
 wget --referer=http://nirsoft.net %1 -O %2 --user=%3 --password=%4 2>&1 | findstr/C:saved
+
+echo %~0 OK>>%LOGFILE%
+call :successInc
 goto :EOF
 
 :power_download url outputFile [user pass]
+findstr /C:"%~0 %~n2 OK" %LOGFILE% >NUL 2>&1 && echo %g%%~0 %~n2 OK && goto :EOF
 echo %c%%~0%END% %y%%1 %HIGH%%2%END% %3 %4
 set url=%1
 set outputFile=%2
 set user=%3
 set password=%4
 
+call :counterInc
+
 IF NOT DEFINED outputFile echo USAGE: %~nx0 url output [user pass]& exit /b
 echo.%HIGH%%k%
 IF EXIST %outputFile% del /q %outputFile% 2>NUL
-IF EXIST .\wget.exe set wget=.\wget.exe
+IF EXIST wget.exe set wget=wget.exe
 IF DEFINED wget (
   echo wget --no-check-certificate %url% -O %outputFile% --user=%user% --password=%password% 2>&1 | findstr /C:saved
   wget --no-check-certificate %url% -O %outputFile% --user=%user% --password=%password% 2>&1 | findstr /C:saved
@@ -370,45 +471,72 @@ IF DEFINED wget (
   powershell -executionPolicy bypass -Command "&{$client = new-object System.Net.WebClient ; $client.DownloadFile('%url%','%outputFile%')}"
 )
 echo.%END%
+
+echo %~0 %~n2 OK>>%LOGFILE%
+call :successInc
 goto :EOF
 
 :power_unzip archive filter [keep]
 :: power_unzip does overwrite extracted files
+findstr /L /C:"%~0 %~n1 OK" %LOGFILE% >NUL 2>&1 && echo %g%%~0 %~n1 OK && goto :EOF
+findstr /L /C:"%~0 %~n1 %2 OK" %LOGFILE% >NUL 2>&1 && echo %g%%~0 %~n1 %2 OK && goto :EOF
 echo %HIGH%%c%%~0%END%%c% %1 %2
 IF NOT EXIST %1 goto :EOF
 set archive=%1
 set filter=%2
-set del=%3
-IF NOT DEFINED filter echo USAGE: %~0 archive filter del& exit /b
-IF NOT EXIST %archive% echo USAGE: %~0 archive filter del& exit /b
+set keep=%3
+
+call :counterInc
+
+IF NOT DEFINED filter echo USAGE: %~0 archive filter [keep]& exit /b
+IF NOT EXIST %archive% echo USAGE: %~0 archive filter [keep]& exit /b
 powershell -executionPolicy bypass -Command "&{Add-Type -AssemblyName System.IO.Compression.FileSystem ; $Filter = '%filter%' ; $zip = [System.IO.Compression.ZipFile]::OpenRead('%archive%') ; $zip.Entries | Where-Object { $_.Name -like $Filter } | ForEach-Object { $FileName = $_.Name ; [System.IO.Compression.ZipFileExtensions]::ExtractToFile($_, "$FileName", $true)} }"
-IF NOT [%del%]==[keep] del /q %archive% 2>NUL
+IF %ERRORLEVEL% NEQ 0 (
+  set keep=keep
+) ELSE (
+  echo %~0 %~n1 %2 OK>>%LOGFILE%
+)
+
+IF NOT [%keep%]==[keep] (
+  del /q %archive% 2>NUL
+  echo %~0 %~n1 OK>>%LOGFILE%
+)
+call :successInc
 goto :EOF
 
-:7unzip archive target [password] [filter] [keep]
+:7unzip archive targetDir [password] [filter] [keep]
 :: 7unzip does overwrite extracted files
+findstr /C:"%~0 %~n1 OK" %LOGFILE% >NUL 2>&1 && echo %g%%~0 %~n1 OK && goto :EOF
 echo %c%%~0 %1%END% %2 %3
 set archive=%1
-set target=%2
+set targetDir=%2
 set password=%3
 set filter=%4
-set del=%5
+set keep=%5
 IF DEFINED password set password=-p%~3
+IF /I [%password%]==[nopassword] set password=
 IF DEFINED filter set filter=%4 -r
 
+call :counterInc
+
 echo %g%
-IF DEFINED VERBOSE echo 7z.exe e -y -o%target% %password% %archive% %filter%
-7z.exe e -y -o%target% %password% %archive% %filter% | findstr /C:Extracting
+IF DEFINED VERBOSE echo 7z.exe e -y -o%targetDir% %password% %archive% %filter%
+7z.exe e -y -o%targetDir% %password% %archive% %filter% | findstr /C:Extracting
 echo %END%
-IF NOT [%del%]==[keep] del /q %archive% 2>NUL
+
+IF /I NOT [%keep%]==[keep] (
+  del /q %archive% 2>NUL
+  echo %~0 %~n1 OK>>%LOGFILE%
+)
+call :successInc
 goto :EOF
 
 :update_HKLM_path
 echo %c%%~0%END%
 set RKIT_PATH=%CD%
 
-path | findstr /C:"%RKIT_PATH%" >NUL 2>&1
-IF ERRORLEVEL 0 (
+reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v PATH | findstr /C:"%RKIT_PATH%" >NUL 2>&1
+IF %ERRORLEVEL% EQU 0 (
   echo %g%No need to update PATH with %RKIT_PATH%... %HIGH%%g%OK%END%
   goto :EOF
 )
@@ -429,8 +557,8 @@ goto :EOF
 echo %c%%~0%END%
 set RKIT_PATH=%CD%
 
-path | findstr /C:"%RKIT_PATH%" >NUL 2>&1
-IF ERRORLEVEL 0 (
+reg query HKCU\Environment /v PATH | findstr /C:"%RKIT_PATH%" >NUL 2>&1
+IF %ERRORLEVEL% EQU 0 (
   echo %g%No need to update PATH with %RKIT_PATH%... %HIGH%%g%OK%END%
   goto :EOF
 )
@@ -447,12 +575,92 @@ REM for /f "skip=2 tokens=3*" %%a in ('reg query HKCU\Environment /v PATH') do i
 echo UPDATE %y%HKCU%END%_PATH with %RKIT_PATH%... %HIGH%%g%OK%END%
 goto :EOF
 
+:startup
+setlocal enabledelayedexpansion
+IF EXIST %LOGFILE% (
+  :: get version installed if any:
+  set /p installedDateVersion= <%LOGFILE%
+  for /f "tokens=1" %%a in ("!installedDateVersion!") do set installedVersion=%%a
+  findstr /C:"ALL GOOD, PARDNER" %LOGFILE% 2>NUL
+  IF !ERRORLEVEL! EQU 0 set fullyInstalled=true
+) ELSE (
+  :: we don't know which version was installed:
+  IF EXIST wc.exe set installedVersion=unknown
+)
+setlocal disabledelayedexpansion
+
+:: debug
+REM echo installedDateVersion=%installedDateVersion%
+REM echo installedVersion=%installedVersion%
+REM echo fullyInstalled=%fullyInstalled%
+set choice=n
+IF DEFINED fullyInstalled (
+  :: if fullyInstalled previous version==current, prompt for re-install
+  IF [%installedVersion%]==[%version%] (
+    echo.
+    echo %HIGH%%y%Please NOTE:%END% RKIT %installedDateVersion% with success. DO you want to %HIGH%re-install%END% version %version% anyway?
+    echo %HIGH%%k%re-install will %w%purge everything%k% + re-download everything under %INSTALLDIR%%END%
+    echo.
+    set /p choice=choice? [N/y] 
+  ) ELSE (
+  :: if fullyInstalled previous version!=current, just indicate it's an update
+    echo.
+    echo %HIGH%%g%Please NOTE:%END% RKIT %installedDateVersion% with success. New version %version% will %HIGH%update%END% your folder.
+    echo %HIGH%%k%update will just re-download + overwrite everything under %INSTALLDIR%%END% in 5 seconds...
+    echo.
+    ping -n 6 localhost >NUL 2>&1
+  )
+)
+
+:: if potentially installed and log absent for some reason, just indicate it's an update
+IF [%installedVersion%]==[unknown] (
+  echo.
+  echo %HIGH%%y%Please NOTE:%END% RKIT *seems* to be installed already. New version %version% will %HIGH%update%END% your folder.
+  echo %HIGH%%k%update will just re-download + overwrite everything under %INSTALLDIR%%END% in 5 seconds...
+  echo.
+  ping -n 6 localhost >NUL 2>&1
+)
+
+:: purge everything + log: will run only if user is prompted to re-install and they accept
+:: in the future, new versions may also do it silentely but i'm not a fan since users may add their own stuff in that folder
+:: that would mean I would have to delete files selectively or make sure downloads actually overwrite old ones
+:: the actual issue stands with mklink and busybox. 
+IF /I [%choice%]==[y] (
+  del *.log *.cab *.upx *.exe *.dll *.cfg *.scr *.msi *.vbs *.ocx *.ini *.inf *.sys *.chm *.hlp *.txt *.adm *.doc *.htm *.lmk *.msc *.cnt *.reg *.xsl *.bat *.config *.7z *.zip
+) ELSE (
+  IF DEFINED fullyInstalled exit
+)
+IF NOT EXIST %LOGFILE% echo %version% has been installed on %DATE% >%LOGFILE%
+goto :EOF
+
+:allgood
+echo.%g%
+echo            _ _    _____                 _     _____              _                 
+echo      /\   ^| ^| ^|  / ____^|               ^| ^|   ^|  __ \            ^| ^|                
+echo     /  \  ^| ^| ^| ^| ^|  __  ___   ___   __^| ^|   ^| ^|__) ^|_ _ _ __ __^| ^|_ __   ___ _ __ 
+echo    / /\ \ ^| ^| ^| ^| ^| ^|_ ^|/ _ \ / _ \ / _` ^|   ^|  ___/ _` ^| '__/ _` ^| '_ \ / _ \ '__^|
+echo   / ____ \^| ^| ^| ^| ^|__^| ^| (_) ^| (_) ^| (_^| ^|_  ^| ^|  ^| (_^| ^| ^| ^| (_^| ^| ^| ^| ^|  __/ ^|   
+echo  /_/    \_\_^|_^|  \_____^|\___/ \___/ \__,_^( ^) ^|_^|   \__,_^|_^|  \__,_^|_^| ^|_^|\___^|_^|   
+echo                                          ^|/                                        
+echo.%END%
+goto :EOF
+
+:counterInc
+set /A COUNTER=COUNTER+1
+goto :EOF
+
+:successInc
+set /A SUCCESS=SUCCESS+1
+REM pause
+goto :EOF
+
 :error
 echo.%r%
 echo ==============================================================
 echo ERROR: %HIGH%%*%END%%r%
-IF %1 == setx echo %y%Consider installing Windows XP SP3 or Server 2003 SP2 %r%
-IF %1 == powershell echo %y%Consider install Management Framework at https://support.microsoft.com/en-us/help/968929/ (or download wget.exe manually) %r%
+IF [%1]==[setx] echo %y%Consider installing Windows XP SP3 or Server 2003 SP2 %r%
+IF [%1]==[powershell] echo %y%Consider install Management Framework at https://support.microsoft.com/en-us/help/968929/ [or download wget.exe manually] %r%
+IF [%1]==[mkdir] echo %y%Consider installing in a folder you have rights to %r%
 echo ==============================================================
 echo.%END%
 pause
@@ -460,7 +668,17 @@ exit
 goto :EOF
 
 :end
+echo IF %COUNTER% EQU %SUCCESS%
+IF %COUNTER% EQU %SUCCESS% (
+  call :allgood
+  echo ALL GOOD, PARDNER | tee -a %LOGFILE%
+  echo exit in 10 seconds...
+  ping -n 11 localhost >NUL 2>&1
+) ELSE (
+  echo.%r%
+  echo WARNING: somthing went wrong, please check and correct the script or just accept the fatality.%END%
+  pause
+)
+del /q %TMPFILE%*
 popd
-echo %c%END%END%
-echo exit in 5 seconds...
-ping -n 6 localhost >NUL 2>&1
+exit

@@ -4,14 +4,7 @@
 # include this project only
 !.gitignore
 !.gitattributes
-!_install-rkit-portable.cmd
-!power_download.cmd
-!power_unzip.cmd
-!base64dec.cmd
-!base64enc.cmd
-!win10colors.cmd
-!win10colors-set.cmd
-!file.cmd
+!*.cmd
 !README.md
 !CHANGELOG.md
 !LICENSE

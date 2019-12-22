@@ -1,1 +1,1 @@
-powershell "[Text.Encoding]::UTF8.GetString([convert]::FromBase64String(\"%1\"))"
+@powershell -executionPolicy bypass -Command [Text.Encoding]::UTF8.GetString^([convert]::FromBase64String^(\"%1\"^)^)

@@ -181,6 +181,7 @@ Refer to [KB article 317949](http://support.microsoft.com/default.aspx?scid=kb;e
 Linux/UX ultra complete profile [exploit](https://github.com/audioscavenger/exploit)
 
 # :ribbon: License (is GNU GPL3)
+This project is distributed under [GNU Affero General Public License, Version 3][AGPLv3].
 
                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
@@ -193,3 +194,4 @@ install-rkit-portable  Copyright (C) <2019>  <audioscavenger@it-cooking.com>
 This program comes with ABSOLUTELY NO WARRANTY;
 This is free software, and you are welcome to redistribute it
 under certain conditions; https://www.gnu.org/licenses/gpl-3.0.html
+
