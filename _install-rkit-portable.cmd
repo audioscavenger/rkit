@@ -1,6 +1,3 @@
-echo TODO: make lin2xml and dig compatible because of lib2xml.dll used for both but different 
-
-
 ::   install-rkit-portable  Copyright (C) <2019>  <audioscavenger@it-cooking.com>
 ::   This program comes with ABSOLUTELY NO WARRANTY;
 ::   This is free software, and you are welcome to redistribute it
@@ -49,10 +46,12 @@ echo TODO: make lin2xml and dig compatible because of lib2xml.dll used for both 
 :: + compress every DLL with UPX
 :: ----------------------------------------------------------------------------------------------------------------------
 :: TODO:
+:: [ ] make lin2xml and dig compatible because of lib2xml.dll used for both but different 
 :: [x] download wget first to get rid of powershell asap
 :: [ ] use 7zip portable instead
 :: [ ] detect UNC path because mklink won't work
 :: [ ] https://www.dostips.com/forum/viewtopic.php?f=3&t=3428
+:: [ ] git push -f --set-upstream origin master
 :: ----------------------------------------------------------------------------------------------------------------------
 
 @echo OFF
@@ -265,6 +264,9 @@ goto :end
 
 
 :set_colors
+set colorCompatibleVersions=-8-8.1-10-2016-2019-
+IF DEFINED WindowsVersion IF "!colorCompatibleVersions:-%WindowsVersion%-=_!"=="%colorCompatibleVersions%" goto :EOF
+
 set END=[0m
 set HIGH=[1m
 set k=[30m
@@ -659,8 +661,8 @@ echo.%r%
 echo ==============================================================
 echo ERROR: %HIGH%%*%END%%r%
 IF [%1]==[setx] echo %y%Consider installing Windows XP SP3 or Server 2003 SP2 %r%
-IF [%1]==[powershell] echo %y%Consider install Management Framework at https://support.microsoft.com/en-us/help/968929/ [or download wget.exe manually] %r%
-IF [%1]==[mkdir] echo %y%Consider installing in a folder you have rights to %r%
+IF [%1]==[powershell] echo %y%Consider install Management Framework at https://download.microsoft.com/download/6/F/5/6F5FF66C-6775-42B0-86C4-47D41F2DA187/Win8.1AndW2K12R2-KB3191564-x64.msu [or download wget.exe manually] %r%
+IF [%1]==[mkdir] echo %y%Consider installing in a folder you have Modifications permission %r%
 echo ==============================================================
 echo.%END%
 pause

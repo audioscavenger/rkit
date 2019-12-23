@@ -1,5 +1,6 @@
 :: Console Resize values via PowerShell (changeable)
 SET "_PSResize=100 54 100 9997"
+IF NOT [%4]=[] SET "_PSResize=%1 %2 %3 %4"
 
 :: Check for powershell via PATH variable
 POWERSHELL "Exit" >NUL 2>&1 && SET "_PS=1"
@@ -18,5 +19,5 @@ powershell -command "&{$H=get-host;$W=$H.ui.rawui;$B=$W.buffersize;$B.width=%3;$
 GOTO:EOF
 
 :end
-pause
+REM pause
 

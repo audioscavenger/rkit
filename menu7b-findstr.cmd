@@ -6,7 +6,8 @@ rem Activate a CheckList/RadioButton controlled by cursor keys
 rem Antonio Perez Ayala
 
 setlocal
-set "switch="
+set "switch=true"
+REM set "switch="
 set "endHeader="
 :header
    cls
@@ -18,7 +19,7 @@ set "endHeader="
    echo/
    %endHeader%
    if not defined switch (set "switch=/R") else set "switch="
-   call :CheckList select="First option/Second option/Third option/Last option" %switch%
+   call :CheckList select="First option /Second option/Third option /Last option  " %switch%
    echo/
    echo/
    if "%select%" equ "0" goto endProg
