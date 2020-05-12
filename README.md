@@ -54,6 +54,7 @@ Nirsoft tools are mostly GUI and therefore commented by default but you can easi
 - [x] netcat _1.1.1_
 - [ ] NirSoft _latest_
 - [x] openSSL _1.1.1c_
+- [x] sqlite _33.10.100_
 - [x] SysinternalsSuite _latest_
 - [x] tcpdump _latest_
 - [x] UnxUtils _latest_
@@ -159,6 +160,7 @@ Refer to [KB article 317949](http://support.microsoft.com/default.aspx?scid=kb;e
 * [x] curl
 * [x] dig
 * [x] base64 encore/decode
+* [x] sqlite
 * [x] upx
 * [x] XMLStarlet
 * [x] dirhash
