@@ -1,7 +1,5 @@
 @echo off
 if "%~1" equ "OptionSelection" goto %1
-@echo off
-if "%~1" equ "OptionSelection" goto %1
 :: https://www.dostips.com/forum/viewtopic.php?f=3&t=6936
 
 rem Activate a vertical selection menu controlled by cursor keys
