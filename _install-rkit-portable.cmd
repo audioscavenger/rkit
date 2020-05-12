@@ -3,7 +3,7 @@
 ::   This is free software, and you are welcome to redistribute it
 ::   under certain conditions; https://www.gnu.org/licenses/gpl-3.0.html
 :: ----------------------------------------------------------------------------------------------------------------------
-@set version=1.4.3
+@set version=1.4.4
 :: ----------------------------------------------------------------------------------------------------------------------
 :: This batch purpose is to create a portable Resource Kit folder with UNIX-like commands for your convenience.
 :: It features mostly command line tools including busybox, SysinternalsSuite, Rkit2003 and 7zip among many.
@@ -33,6 +33,7 @@
 :: - [x] NirCmd _latest_
 :: - [x] openSSL _1.1.1c_
 :: - [x] Pdftk free _1.41_
+:: - [x] sqlite _33.10.100_
 :: - [x] SysinternalsSuite _latest_
 :: - [x] tcpdump _latest_
 :: - [x] UnxUtils _latest_
@@ -142,6 +143,10 @@ call :power_download https://curl.haxx.se/windows/%url% %TEMP%\curl-mingw.zip
 call :power_unzip %TEMP%\curl-mingw.zip curl-ca-bundle.crt keep
 call :power_unzip %TEMP%\curl-mingw.zip curl.exe keep
 call :power_unzip %TEMP%\curl-mingw.zip libcurl-x%bits%.dll
+
+:: SysinternalsSuite includes PsTools which will trigger exaggerated/mental AVs/services that easily shoot false positives.
+call :power_download https://sqlite.org/2020/sqlite-tools-win32-x86-3310100.zip %TEMP%\sqlite-tools-win32-x86.zip
+call :7unzip %TEMP%\sqlite-tools-win32-x86.zip .\
 
 :: SysinternalsSuite includes PsTools which will trigger exaggerated/mental AVs/services that easily shoot false positives.
 call :power_download https://download.sysinternals.com/files/SysinternalsSuite.zip %TEMP%\SysinternalsSuite.zip

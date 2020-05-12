@@ -5,6 +5,7 @@
 !.gitignore
 !.gitattributes
 !*.cmd
+!*.py
 !README.md
 !CHANGELOG.md
 !LICENSE
