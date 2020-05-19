@@ -54,6 +54,7 @@ Nirsoft tools are mostly GUI and therefore commented by default but you can easi
 - [x] netcat _1.1.1_
 - [ ] NirSoft _latest_
 - [x] openSSL _1.1.1c_
+- [x] showJpeg _2.81_
 - [x] sqlite _33.10.100_
 - [x] SysinternalsSuite _latest_
 - [x] tcpdump _latest_

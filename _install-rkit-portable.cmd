@@ -3,7 +3,7 @@
 ::   This is free software, and you are welcome to redistribute it
 ::   under certain conditions; https://www.gnu.org/licenses/gpl-3.0.html
 :: ----------------------------------------------------------------------------------------------------------------------
-@set version=1.4.5
+@set version=1.4.6
 :: ----------------------------------------------------------------------------------------------------------------------
 :: This batch purpose is to create a portable Resource Kit folder with UNIX-like commands for your convenience.
 :: It features mostly command line tools including busybox, SysinternalsSuite, Rkit2003 and 7zip among many.
@@ -34,6 +34,7 @@
 :: - [x] NirCmd _latest_
 :: - [x] openSSL _1.1.1c_
 :: - [x] Pdftk free _1.41_
+:: - [x] showJpeg _2.81_
 :: - [x] sqlite _33.10.100_
 :: - [x] SysinternalsSuite _latest_
 :: - [x] tcpdump _latest_
@@ -130,6 +131,10 @@ IF NOT DEFINED msvcr110 (
 call :power_download https://sourceforge.net/projects/gnuwin32/files/libxml/2.4.12-1/libxml2-2.4.12-bin.zip/download %TEMP%\libxml2-win32.zip
 call :power_unzip %TEMP%\libxml2-win32.zip libxml2.dll keep
 call :power_unzip %TEMP%\libxml2-win32.zip *.exe
+
+:: ShowJPG has ability of displaying and scrolling in all directions in the decompression time! Have you ever seen something like this?
+call :power_download http://www.pictview.com/showjpg.zip %TEMP%\showjpg.zip
+call :power_unzip %TEMP%\showjpg *.exe
 
 :: curl guys simply remove the link after each new version, thanks
 REM call :power_download https://curl.haxx.se/windows/dl-7.65.0_1/curl-7.65.0_1-win%bits%-mingw.zip %TEMP%\curl-7.65.0_1-win%bits%-mingw.zip

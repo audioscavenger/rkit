@@ -1,4 +1,5 @@
 ## Contents
+- [v1.4.6](#v146)
 - [v1.4.5](#v145)
 - [v1.4.0](#v140)
 - [v1.2.1](#v121)
@@ -6,6 +7,9 @@
 - [v1.1.0](#v110)
 - [v1.0.1](#v101)
 - [v1.0.0](#v100)
+
+* v1.4.5
+  * added showJpeg
 
 * v1.4.5
   * replaced xargs from UnxUtils by busybox one, was too slow
