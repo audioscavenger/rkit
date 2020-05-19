@@ -1,10 +1,16 @@
 ## Contents
+- [v1.4.5](#v145)
 - [v1.4.0](#v140)
 - [v1.2.1](#v121)
 - [v1.2.0](#v120)
 - [v1.1.0](#v110)
 - [v1.0.1](#v101)
 - [v1.0.0](#v100)
+
+* v1.4.5
+  * replaced xargs from UnxUtils by busybox one, was too slow
+  * added jq
+  * added sqlite-tools
 
 * v1.4.0
   * enabled UnxUtils first, sinc busybox has not been fully tested on Windows, obviously

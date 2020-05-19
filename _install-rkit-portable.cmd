@@ -3,7 +3,7 @@
 ::   This is free software, and you are welcome to redistribute it
 ::   under certain conditions; https://www.gnu.org/licenses/gpl-3.0.html
 :: ----------------------------------------------------------------------------------------------------------------------
-@set version=1.4.4
+@set version=1.4.5
 :: ----------------------------------------------------------------------------------------------------------------------
 :: This batch purpose is to create a portable Resource Kit folder with UNIX-like commands for your convenience.
 :: It features mostly command line tools including busybox, SysinternalsSuite, Rkit2003 and 7zip among many.
@@ -27,6 +27,7 @@
 :: - [x] dirhash _latest_
 :: - [x] file _5.03_
 :: - [x] gawk _3.1.6-1_
+:: - [x] jq _1.6_
 :: - [ ] mailsend-go _1.0.4_
 :: - [x] netcat _1.1.1_
 :: - [ ] NirSoft _latest_
@@ -87,6 +88,8 @@ call :startup
 :: - you are using UNC path, cannot use mklink
 call :power_download https://downloads.sourceforge.net/project/unxutils/unxutils/current/UnxUtils.zip %TEMP%\UnxUtils.zip
 call :power_unzip %TEMP%\UnxUtils.zip *.exe
+:: just noticed how slow is UnxUtils xargs
+del /f /q xargs.exe
 
 :: wget is included in busybox but it's a limited version
 call :power_download https://eternallybored.org/misc/wget/1.20.3/%bits%/wget.exe .\wget.exe
@@ -100,6 +103,9 @@ call :setup_7zip_Extn
 call :copy_7z
 
 call :power_download https://frippery.org/files/busybox/busybox.exe .\busybox.exe
+
+:: jq is a json parser
+call :power_download https://github.com/stedolan/jq/releases/download/jq-1.6/jq-win%bits%.exe .\jq.exe
 
 :: awk is included in busybox but it's a limited version
 call :power_download https://downloads.sourceforge.net/project/gnuwin32/gawk/3.1.6-1/gawk-3.1.6-1-bin.zip %TEMP%\gawk-3.1.6-1-bin.zip
