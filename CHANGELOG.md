@@ -8,6 +8,9 @@
 - [v1.0.1](#v101)
 - [v1.0.0](#v100)
 
+* v1.4.6
+  * removed showJpeg
+
 * v1.4.5
   * added showJpeg
 
