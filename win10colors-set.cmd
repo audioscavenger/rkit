@@ -1,4 +1,27 @@
 @echo off
+REM setlocal enabledelayedexpansion
+
+set osType=workstation
+wmic os get Caption /value | findstr Server >%TMP%\wmic.tmp.txt && set osType=server
+
+:: https://www.lifewire.com/windows-version-numbers-2625171
+IF [%osType%]==[workstation] (
+  for /f "tokens=4,5 delims=. " %%a in ('ver') do echo %%a.%%b | findstr "6.2 6.3 10.0" >NUL || exit /b 0
+) ELSE (
+  for /f "tokens=4" %%a in (%TMP%\wmic.tmp.txt) do echo %%a | findstr "2016 2019" >NUL || exit /b 0
+)
+REM echo %WindowsVersion% | findstr "6.2 6.3 10.0 2016 2019" >NUL || exit /b 0
+
+REM ver | findstr /C:"Version 10.0" && set "WindowsVersion=10"    && goto :EOF
+REM ver | findstr /C:"Version 6.3"  && set "WindowsVersion=8.1"   && goto :EOF
+REM ver | findstr /C:"Version 6.2"  && set "WindowsVersion=8"     && goto :EOF
+REM ver | findstr /C:"Version 6.1"  && set "WindowsVersion=7"     && exit /b 0
+REM ver | findstr /C:"Version 6.0"  && set "WindowsVersion=Vista" && exit /b 0
+REM ver | findstr /C:"Version 5.1"  && set "WindowsVersion=XP"    && exit /b 0
+
+REM set colorCompatibleVersions=-8-8.1-10-2016-2019-
+REM IF "!colorCompatibleVersions:-%WindowsVersion%-=_!"=="%colorCompatibleVersions%" exit /b 0
+
 set END=[0m
 set HIGH=[1m
 set Underline=[4m

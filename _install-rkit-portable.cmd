@@ -1,9 +1,11 @@
+@echo OFF
 ::   install-rkit-portable  Copyright (C) <2019>  <audioscavenger@it-cooking.com>
 ::   This program comes with ABSOLUTELY NO WARRANTY;
 ::   This is free software, and you are welcome to redistribute it
 ::   under certain conditions; https://www.gnu.org/licenses/gpl-3.0.html
 :: ----------------------------------------------------------------------------------------------------------------------
-@set version=1.4.6
+:top
+@set version=1.5.1
 :: ----------------------------------------------------------------------------------------------------------------------
 :: This batch purpose is to create a portable Resource Kit folder with UNIX-like commands for your convenience.
 :: It features mostly command line tools including busybox, SysinternalsSuite, Rkit2003 and 7zip among many.
@@ -16,9 +18,10 @@
 :: This batch *should* be compatible from Windows XP SP3 Pro and beyond.
 :: Requisites: setx, powershell, mklink (will be circumvented at disk cost)
 :: /!\ Warning: starting this batch with ADMIN rights will alter SYSTEM settings. Read carefully what it does.
+:: /!\ Warning: there may be a bug in :setup_7zip_Extn when PROGRAMS=C:\Program Files (x86) because of the parenthesis
 :: ----------------------------------------------------------------------------------------------------------------------
 :: - [x] 7zip _19.00_
-:: - [x] apache benchmark _2.4.39_
+:: - [x] apache benchmark _2.4.43_
 :: - [ ] blat mail _3.2.19_
 :: - [x] busybox _latest_
 :: - [x] curl _7.65_
@@ -56,7 +59,8 @@
 :: [ ] git push -f --set-upstream origin master
 :: ----------------------------------------------------------------------------------------------------------------------
 
-@echo OFF
+:init
+set DEBUG=
 set INSTALLDIR=%1
 set TMPFILE=%TMP%\%~n0.tmp
 set LOGFILE=.\%~n0.log
@@ -68,6 +72,8 @@ set SUCCESS=0
 set fullyInstalled=
 title %0 %version% started %DATE% at %TIME%
 MODE CON: COLS=150 LINES=50
+
+IF DEFINED ProgramW6432 (set "PROGRAMS=%ProgramW6432%") ELSE set "PROGRAMS=%ProgramFiles%"
 
 IF NOT DEFINED INSTALLDIR set INSTALLDIR="%~dp0"
 IF NOT EXIST %INSTALLDIR% md %INSTALLDIR%
@@ -82,6 +88,7 @@ call :startup
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: STANDARD ZONE ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:main
 
 :: UnxUtils are supposedly deprecated since the win32 port of busybox, however:
 :: - busybox tail cannot process UNC paths
@@ -90,6 +97,8 @@ call :power_download https://downloads.sourceforge.net/project/unxutils/unxutils
 call :power_unzip %TEMP%\UnxUtils.zip *.exe
 :: just noticed how slow is UnxUtils xargs
 del /f /q xargs.exe
+:: recently noticed UnxUtils tee doesnt handle colors
+del /f /q tee.exe
 
 :: wget is included in busybox but it's a limited version
 call :power_download https://eternallybored.org/misc/wget/1.20.3/%bits%/wget.exe .\wget.exe
@@ -152,7 +161,7 @@ call :power_unzip %TEMP%\curl-mingw.zip libcurl-x%bits%.dll
 
 :: SysinternalsSuite includes PsTools which will trigger exaggerated/mental AVs/services that easily shoot false positives.
 call :power_download https://sqlite.org/2020/sqlite-tools-win32-x86-3310100.zip %TEMP%\sqlite-tools-win32-x86.zip
-call :7unzip %TEMP%\sqlite-tools-win32-x86.zip .\
+call :power_unzip %TEMP%\sqlite-tools-win32-x86.zip *.exe
 
 :: SysinternalsSuite includes PsTools which will trigger exaggerated/mental AVs/services that easily shoot false positives.
 call :power_download https://download.sysinternals.com/files/SysinternalsSuite.zip %TEMP%\SysinternalsSuite.zip
@@ -170,12 +179,13 @@ call :power_download https://www.idrix.fr/Root/Samples/DirHash%arch%.zip %TEMP%\
 call :power_unzip %TEMP%\DirHash%arch%.zip dirhash.exe
 
 :: apache benchmark tool is very basic, and while it will give you a solid idea of some performance, it is a bad idea to only depend on it if you plan to have your site exposed to serious stress in production.
-call :power_download https://home.apache.org/~steffenal/VC15/binaries/httpd-2.4.39-win%bits%-VC15.zip %TEMP%\httpd-2.4.39-win%bits%-VC15.zip
-call :power_unzip %TEMP%\httpd-2.4.39-win%bits%-VC15.zip ab.exe keep
-call :power_unzip %TEMP%\httpd-2.4.39-win%bits%-VC15.zip abs.exe keep
-call :power_unzip %TEMP%\httpd-2.4.39-win%bits%-VC15.zip libcrypto-1_1%arch%.dll keep
-call :power_unzip %TEMP%\httpd-2.4.39-win%bits%-VC15.zip libssl-1_1%arch%.dll keep
-call :power_unzip %TEMP%\httpd-2.4.39-win%bits%-VC15.zip openssl.exe
+REM call :power_download https://home.apache.org/~steffenal/VC15/binaries/httpd-2.4.39-win%bits%-VC15.zip %TEMP%\httpd-2.4.39-win%bits%-VC15.zip
+call :power_download https://www.apachelounge.com/download/VS16/binaries/httpd-2.4.43-win%bits%-VS16.zip %TEMP%\httpd-win%bits%.zip
+call :power_unzip %TEMP%\httpd-win%bits%.zip ab.exe keep
+call :power_unzip %TEMP%\httpd-win%bits%.zip abs.exe keep
+call :power_unzip %TEMP%\httpd-win%bits%.zip libcrypto-1_1%arch%.dll keep
+call :power_unzip %TEMP%\httpd-win%bits%.zip libssl-1_1%arch%.dll keep
+call :power_unzip %TEMP%\httpd-win%bits%.zip openssl.exe
 
 :: File for Windows
 call :power_download https://sourceforge.net/projects/gnuwin32/files/file/5.03/file-5.03-bin.zip/download %TEMP%\file-5.03-bin.zip
@@ -264,11 +274,10 @@ IF EXIST .\upx.exe upx *.dll
 :: create Ux missing binaries from busybox
 echo.
 call :install_busybox_symlink
-pause
+
 :: update HKLM or HKCU
 echo.
 IF %ADMIN% EQU 0 (call :update_HKLM_path) ELSE (call :update_HKCU_path)
-pause
 
 :: echo systempropertiesadvanced.exe
 goto :end
@@ -294,12 +303,12 @@ goto :EOF
 echo %c%%~0%END%
 :: Cannot use where on Windows XP
 :: where powershell >NUL 2>&1
-REM IF %ERRORLEVEL% NEQ 0 call :error powershell NOT FOUND& goto :end
+REM IF %ERRORLEVEL% NEQ 0 call :error powershell NOT FOUND & goto :end
 for %%x in (powershell.exe) do (set powershell=%%~$PATH:x)
-IF NOT DEFINED powershell call :error powershell NOT FOUND& goto :end
+IF NOT DEFINED powershell call :error powershell NOT FOUND & goto :end
 
 for %%x in (setx.exe) do (set setx=%%~$PATH:x)
-IF NOT DEFINED setx call :error setx NOT FOUND& goto :end
+IF NOT DEFINED setx call :error setx NOT FOUND & goto :end
 
 for %%x in (msvcr110.dll) do (set msvcr110=%%~$PATH:x)
 IF NOT DEFINED msvcr110 echo WARNING: MSVC 2012 redistributable is not installed
@@ -317,9 +326,10 @@ set msvc_url=http://www.dlldownloader.com/msvcr110-dll/download/e481de48e6b9658e
 )
 goto :EOF
 
-:detect_admin_mode
-echo %HIGH%%b%%~0%END%%c% %* %END%
+:detect_admin_mode [num]
+:: https://stackoverflow.com/questions/1894967/how-to-request-administrator-access-inside-a-batch-file
 
+IF DEFINED DEBUG echo %HIGH%%b%%~0%END%%c% %* %END%
 set bits=32
 set bitx=x86
 if "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
@@ -327,16 +337,8 @@ if "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
   set bits=64
   set bitx=x64
 )
-
-:: check current user is local admin
-net localgroup administrators | findstr /B /C:%USERNAME% >NUL
-set ADMIN=%ERRORLEVEL%
-
-set ADMIN=0
-:: check current user is local admin
-:: edit 20190606: not relevant
-REM net localgroup administrators | findstr /B /C:%USERNAME% >NUL
-REM set ADMIN=%ERRORLEVEL%
+set req=%1
+%SystemRoot%\system32\whoami /groups | findstr "12288" >NUL && set "ADMIN=0" || set "ADMIN=1"
 
 IF %ADMIN% EQU 0 (
   echo Batch started with %HIGH%%y%ADMIN%END% rights
@@ -344,16 +346,31 @@ IF %ADMIN% EQU 0 (
   echo Batch started with %y%USER%END% rights
 )
 
-:: https://en.wikipedia.org/wiki/Ver_(command)
-echo.
-ver | findstr /C:"Version 5.1" && set WindowsVersion=XP
-ver | findstr /C:"Version 5.2" && set WindowsVersion=2003
-ver | findstr /C:"Version 6.0" && set WindowsVersion=Vista
-ver | findstr /C:"Version 6.1" && set WindowsVersion=7
-ver | findstr /C:"Version 6.2" && set WindowsVersion=8
-ver | findstr /C:"Version 6.3" && set WindowsVersion=8.1
-ver | findstr /C:"Version 6.4" && set WindowsVersion=10
-ver | findstr /C:"Version 10.0" && set WindowsVersion=10
+IF DEFINED req (
+  IF NOT [%ADMIN%]==[%req%] (
+    echo %r%Batch NOT started with the right privileges, EXIT%END% 1>&2
+    pause
+    exit
+  )
+)
+
+set osType=workstation
+wmic os get Caption /value | findstr Server >%LOGS%\wmic.tmp.txt
+IF %ERRORLEVEL% EQU 0 set osType=server
+
+:: https://www.lifewire.com/windows-version-numbers-2625171
+:: Microsoft Windows [Version 10.0.17763.615]
+IF [%osType%]==[workstation] (
+  REM for /F "tokens=4 delims=. " %%v in ('ver') DO set WindowsVersion=%%v
+  ver | findstr /C:"Version 10.0" && set WindowsVersion=10& goto :EOF
+  ver | findstr /C:"Version 6.3" && set WindowsVersion=8.1& goto :EOF
+  ver | findstr /C:"Version 6.2" && set WindowsVersion=8& goto :EOF
+  ver | findstr /C:"Version 6.1" && set WindowsVersion=7& goto :EOF
+  ver | findstr /C:"Version 6.0" && set WindowsVersion=Vista& goto :EOF
+  ver | findstr /C:"Version 5.1" && set WindowsVersion=XP& goto :EOF
+) ELSE (
+  for /f "tokens=4" %%a in (%LOGS%\wmic.tmp.txt) do set WindowsVersion=%%a
+)
 goto :EOF
 
 :install_busybox_symlink
@@ -423,11 +440,11 @@ SET Extn=001-9 7z-0 arj-4 bz2-2 bzip2-2 cab-7 cpio-12 deb-11 dmg-17 fat-21 gz-14
 :: echo without CR:
 <nul set /p =Setup 7zip file extensions:%g% 
 FOR %%x IN (%Extn%) DO (
-  FOR /f "tokens=1,2 delims=-" %%a in ('@echo %%x') DO (
+  FOR /f "tokens=1,2 delims=-" %%a in ("%%x") DO (
     REG ADD %SC%\.%%a /VE /D "7-Zip.%%a" /F >NUL
     REG ADD %SC%\7-Zip.%%a /VE /D "%%a Archive" /F >NUL
-    REG ADD %SC%\7-Zip.%%a\DefaultIcon /VE /D "%PROGRAMFILES%\7-Zip\7z.dll,%%b" /F >NUL
-    REG ADD %SC%\7-Zip.%%a\shell\open\command /VE /D "\"%PROGRAMFILES%\7-Zip\7zFM.exe\" \"%%1\"" /F >NUL
+    REG ADD %SC%\7-Zip.%%a\DefaultIcon /VE /D "%PROGRAMS%\7-Zip\7z.dll,%%b" /F >NUL
+    REG ADD %SC%\7-Zip.%%a\shell\open\command /VE /D "\"%PROGRAMS%\7-Zip\7zFM.exe\" \"%%1\"" /F >NUL
     <nul set /p =%%a 
   )
 )
@@ -443,8 +460,8 @@ findstr /C:"%~0 OK" %LOGFILE% >NUL 2>&1 && echo %g%%~0 OK && goto :EOF
 echo %c%%~0%END%
 call :counterInc
 
-copy /y "%ProgramFiles%\7-Zip\7z.exe" .\
-copy /y "%ProgramFiles%\7-Zip\7z.dll" .\
+copy /y "%PROGRAMS%\7-Zip\7z.exe" .\
+copy /y "%PROGRAMS%\7-Zip\7z.dll" .\
 
 echo %~0 OK>>%LOGFILE%
 call :successInc
@@ -465,8 +482,8 @@ goto :EOF
 :power_download url outputFile [user pass]
 findstr /C:"%~0 %~n2 OK" %LOGFILE% >NUL 2>&1 && echo %g%%~0 %~n2 OK && goto :EOF
 echo %c%%~0%END% %y%%1 %HIGH%%2%END% %3 %4
-set url=%1
-set outputFile=%2
+set "url=%~1"
+set "outputFile=%~2"
 set user=%3
 set password=%4
 
@@ -475,14 +492,14 @@ call :counterInc
 IF NOT DEFINED outputFile echo USAGE: %~nx0 url output [user pass]& exit /b
 echo.%HIGH%%k%
 IF EXIST %outputFile% del /q %outputFile% 2>NUL
-IF EXIST wget.exe set wget=wget.exe
-IF DEFINED wget (
-  echo wget --no-check-certificate %url% -O %outputFile% --user=%user% --password=%password% 2>&1 | findstr /C:saved
-  wget --no-check-certificate %url% -O %outputFile% --user=%user% --password=%password% 2>&1 | findstr /C:saved
-) ELSE (
-  echo powershell -executionPolicy bypass -Command "&{$client = new-object System.Net.WebClient ; $client.DownloadFile('%url%','%outputFile%')}"
+REM IF DEFINED wget (
+  REM echo wget --no-check-certificate %url% -O %outputFile% --user=%user% --password=%password% 2>&1 | findstr /C:saved
+  REM wget --no-check-certificate %url% -O %outputFile% --user=%user% --password=%password% 2>&1 | findstr /C:saved
+REM ) ELSE (
+  IF DEFINED DEBUG echo powershell -executionPolicy bypass -Command "&{$client = new-object System.Net.WebClient ; $client.DownloadFile('%url%','%outputFile%')}"
+  echo powershell "%url%"
   powershell -executionPolicy bypass -Command "&{$client = new-object System.Net.WebClient ; $client.DownloadFile('%url%','%outputFile%')}"
-)
+REM )
 echo.%END%
 
 echo %~0 %~n2 OK>>%LOGFILE%
@@ -677,21 +694,21 @@ IF [%1]==[mkdir] echo %y%Consider installing in a folder you have Modifications 
 echo ==============================================================
 echo.%END%
 pause
-exit
+exit /b 1
 goto :EOF
 
 :end
-echo IF %COUNTER% EQU %SUCCESS%
-IF %COUNTER% EQU %SUCCESS% (
+set /A CR=%COUNTER%-%SUCCESS%
+IF %CR% GTR 0 (
   call :allgood
   echo ALL GOOD, PARDNER | tee -a %LOGFILE%
   echo exit in 10 seconds...
   ping -n 11 localhost >NUL 2>&1
 ) ELSE (
   echo.%r%
-  echo WARNING: somthing went wrong, please check and correct the script or just accept the fatality.%END%
+  echo WARNING: something went wrong, please check and correct the script or just accept the fatality.%END%
   pause
 )
 del /q %TMPFILE%*
 popd
-exit
+exit /b %CR%
