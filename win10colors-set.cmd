@@ -1,6 +1,3 @@
-@echo off
-REM setlocal enabledelayedexpansion
-
 set osType=workstation
 wmic os get Caption /value | findstr Server >%TMP%\wmic.tmp.txt && set osType=server
 
