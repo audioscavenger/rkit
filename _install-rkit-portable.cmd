@@ -13,7 +13,7 @@ REM setlocal enabledelayedexpansion
 ::   under certain conditions; https://www.gnu.org/licenses/gpl-3.0.html
 :: ----------------------------------------------------------------------------------------------------------------------
 :top
-@set version=1.5.2
+@set version=1.5.3
 :: ----------------------------------------------------------------------------------------------------------------------
 :: This batch purpose is to create a portable Resource Kit folder with UNIX-like commands for your convenience.
 :: It features mostly command line tools including busybox, SysinternalsSuite, Rkit2003 and 7zip among many.
@@ -28,8 +28,8 @@ REM setlocal enabledelayedexpansion
 :: /!\ Warning: starting this batch with ADMIN rights will alter SYSTEM settings. Read carefully what it does.
 :: /!\ Warning: there may be a bug in :setup_7zip_Extn when PROGRAMS=C:\Program Files (x86) because of the parenthesis
 :: ----------------------------------------------------------------------------------------------------------------------
-:: - [x] 7zip _19.00_
-:: - [x] apache benchmark _2.4.43_
+:: - [x] 7zip _21.03_
+:: - [x] apache benchmark _2.4.46_
 :: - [ ] blat mail _3.2.19_
 :: - [x] busybox _latest_
 :: - [x] cmdow _latest_
@@ -44,7 +44,7 @@ REM setlocal enabledelayedexpansion
 :: - [x] netcat _1.1.1_
 :: - [ ] NirSoft _latest_
 :: - [x] NirCmd _latest_
-:: - [x] openSSL _1.1.1c_
+:: - [x] openSSL _1.1.1i_
 :: - [x] Pdftk free _1.41_
 :: - [x] sqlite _33.10.100_
 :: - [x] SysinternalsSuite _latest_
@@ -54,7 +54,7 @@ REM setlocal enabledelayedexpansion
 :: - [x] wget _1.20.3_
 :: - [ ] Windows Server 2003 Resource Kit Tools
 :: - [x] XMLStarlet _latest_
-:: + install 7zip 19.00
+:: + install 7zip 21.03
 :: + add/update 7zip file associations for local user  (/!\ ==> or ALL USERS   if started as ADMIN!)
 :: + update PATH variable for local user (prepend)     (/!\ ==> or SYSTEM PATH if started as ADMIN! (append))
 :: + compress every DLL with UPX
@@ -124,8 +124,8 @@ REM call :power_unzip %TMP%\coreutils.zip *.exe
 call :power_download https://eternallybored.org/misc/wget/1.20.3/%bits%/wget.exe .\wget.exe
 
 :: 7zip first, in any case we need 7z.exe
-set ver7zMaj=19
-set ver7zMin=00
+set ver7zMaj=21
+set ver7zMin=03
 call :power_download https://downloads.sourceforge.net/project/sevenzip/7-Zip/%ver7zMaj%.%ver7zMin%/7z%ver7zMaj%%ver7zMin%%arch%.exe %TMP%\7z%ver7zMaj%%ver7zMin%%arch%.exe
 call :install_7zip %TMP%\7z%ver7zMaj%%ver7zMin%%arch%.exe
 call :setup_7zip_Extn
@@ -204,7 +204,7 @@ call :power_unzip %TMP%\DirHash%arch%.zip dirhash.exe
 
 :: apache benchmark tool is very basic, and while it will give you a solid idea of some performance, it is a bad idea to only depend on it if you plan to have your site exposed to serious stress in production.
 REM call :power_download https://home.apache.org/~steffenal/VC15/binaries/httpd-2.4.39-win%bits%-VC15.zip %TMP%\httpd-2.4.39-win%bits%-VC15.zip
-call :power_download https://www.apachelounge.com/download/VS16/binaries/httpd-2.4.43-win%bits%-VS16.zip %TMP%\httpd-win%bits%.zip
+call :power_download https://www.apachelounge.com/download/VS16/binaries/httpd-2.4.46-win%bits%-VS16.zip %TMP%\httpd-win%bits%.zip
 call :power_unzip %TMP%\httpd-win%bits%.zip ab.exe keep
 call :power_unzip %TMP%\httpd-win%bits%.zip abs.exe keep
 call :power_unzip %TMP%\httpd-win%bits%.zip libcrypto-1_1%arch%.dll keep
