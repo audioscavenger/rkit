@@ -6,12 +6,13 @@ call :set_colors
 
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: version 2.2 - overhead of colors
-IF "%~1"=="" echo usage: call progressBar value ["text" [barchar [spacechar [%%color%% [barArea]]]]]]
+:: call progressBar %Pct% "text" █ . %y% & set /A "Pct+=10"
+IF "%~1"=="" echo usage: call progressBar pctValue ["text" [barchar [spacechar [%%color%% [barArea]]]]]]
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 
 IF NOT "%~3"=="" call :initProgressBar %3 %4 %5 %6
-call :drawProgressBar %1 "%~2."
+call :drawProgressBar %1 "%~2                                                                                     "
 
 REM call :initProgressBar "|" " "
 REM call :drawProgressBar 0 "this is a custom progress bar"
@@ -38,7 +39,7 @@ if "%~2"=="" (
   set "pb.text=!pb.text:~0,%pb.textArea%!"
   call :substr %2 0 %pb.textArea% pb.text
 )
-<nul set /p "pb.prompt=[%pb.color%!pb.fill:~0,%pb.filled%!%pb.colorEND%!pb.dots:~0,%pb.dotted%!][ %pb.pct% ] %pb.text%!pb.cr!"
+<nul set /p "pb.prompt=[%pb.color%!pb.fill:~0,%pb.filled%!%pb.colorEND%!pb.dots:~0,%pb.dotted%!][ %pb.pct% ] %pb.text%!pb.cr!" 1>&2
 endlocal
 goto :eof
 
@@ -97,8 +98,8 @@ goto :EOF
 :len varName/string
 :: :len varName - not actual value!
 :: https://stackoverflow.com/questions/5837418/how-do-you-get-the-string-length-in-a-batch-file/8566001#8566001
-IF DEFINED %1 (call echo:%%%1%%>%TMP%\%~n0.tmp) ELSE (echo:%~1>%TMP%\%~n0.tmp)
-FOR %%? IN (%TMP%\%~n0.tmp) DO SET /A "strLength=%%~z? - 2"
+IF DEFINED %1 (call echo:%%%1%%>%TEMP%\%~n0.tmp) ELSE (echo:%~1>%TEMP%\%~n0.tmp)
+FOR %%? IN (%TEMP%\%~n0.tmp) DO SET /A "strLength=%%~z? - 2"
 exit /b %strLength%
 goto :EOF
 

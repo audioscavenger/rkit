@@ -13,7 +13,7 @@ REM setlocal enabledelayedexpansion
 ::   under certain conditions; https://www.gnu.org/licenses/gpl-3.0.html
 :: ----------------------------------------------------------------------------------------------------------------------
 :top
-@set version=1.5.3
+@set version=1.5.4
 :: ----------------------------------------------------------------------------------------------------------------------
 :: This batch purpose is to create a portable Resource Kit folder with UNIX-like commands for your convenience.
 :: It features mostly command line tools including busybox, SysinternalsSuite, Rkit2003 and 7zip among many.
@@ -46,7 +46,7 @@ REM setlocal enabledelayedexpansion
 :: - [x] NirCmd _latest_
 :: - [x] openSSL _1.1.1i_
 :: - [x] Pdftk free _1.41_
-:: - [x] sqlite _33.10.100_
+:: - [x] sqlite _3.36.0_
 :: - [x] SysinternalsSuite _latest_
 :: - [x] tcpdump _latest_
 :: - [x] UnxUtils _latest_
@@ -184,7 +184,7 @@ call :power_unzip %TMP%\curl-mingw.zip curl.exe keep
 call :power_unzip %TMP%\curl-mingw.zip libcurl-x%bits%.dll
 
 :: SysinternalsSuite includes PsTools which will trigger exaggerated/mental AVs/services that easily shoot false positives.
-call :power_download https://sqlite.org/2020/sqlite-tools-win32-x86-3310100.zip %TMP%\sqlite-tools-win32-x86.zip
+call :power_download https://sqlite.org/2021/sqlite-tools-win32-x86-3360000.zip %TMP%\sqlite-tools-win32-x86.zip
 call :power_unzip %TMP%\sqlite-tools-win32-x86.zip *.exe
 
 :: SysinternalsSuite includes PsTools which will trigger exaggerated/mental AVs/services that easily shoot false positives.
