@@ -71,9 +71,9 @@ echo STARTING Write test of %nbGo%GB on %drive%
 echo ------------------------------------------
 echo   %END%1. Flushing disk cache:%HIGH%%k% 
 sync %drive% 2>NUL
-echo   %END%2. Generating %nbGo%000M.tmp out of /dev/zero...%HIGH%%k% 
+echo   %END%2. Generating %nbGo%000M.tmp out of /dev/urandom...%HIGH%%k% 
 call %get_timelapse% start >NUL 2>&1
-busybox dd if=/dev/zero of=%DIRNAME%\%nbGo%000M.tmp bs=%block%k count=%nbBlocks% >NUL 2>&1 && sync %drive% 2>NUL
+busybox dd if=/dev/urandom of=%DIRNAME%\%nbGo%000M.tmp bs=%block%k count=%nbBlocks% >NUL 2>&1 && sync %drive% 2>NUL
 echo   %END%3. Flushing disk cache again:%HIGH%%k% 
 sync %drive% 2>NUL
 call %get_timelapse% %TIMESTART% %TIME% >NUL 2>&1
