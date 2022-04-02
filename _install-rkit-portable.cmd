@@ -9,7 +9,7 @@ REM setlocal enabledelayedexpansion
 ::   under certain conditions; https://www.gnu.org/licenses/gpl-3.0.html
 :: ----------------------------------------------------------------------------------------------------------------------
 :top
-@set version=1.6.1
+@set version=1.6.3
 :: ----------------------------------------------------------------------------------------------------------------------
 :: This batch purpose is to create a portable Resource Kit folder with UNIX-like commands for your convenience.
 :: It features mostly command line tools including busybox, SysinternalsSuite, Rkit2003 and 7zip among many.
@@ -207,7 +207,7 @@ goto :EOF
 echo %c%%~0 %END%
 :: https://downloads.isc.org/isc/bind9/
 :: BIND9 also contains dig
-call :power_download https://downloads.isc.org/isc/bind9/9.18.1/BIND9.18.1.%bitx%.zip %TMP%\BIND9.zip
+call :power_download https://downloads.isc.org/isc/bind9/9.17.15/BIND9.17.15.%bitx%.zip %TMP%\BIND9.zip
 call :power_unzip %TMP%\BIND9.zip dig.exe keep
 call :power_unzip %TMP%\BIND9.zip *.dll
 :: BIND9 libxml2.dll is in conflict with the one from xmllint, but xmllint's works with both
