@@ -9,7 +9,7 @@ REM setlocal enabledelayedexpansion
 ::   under certain conditions; https://www.gnu.org/licenses/gpl-3.0.html
 :: ----------------------------------------------------------------------------------------------------------------------
 :top
-@set version=1.6.0
+@set version=1.6.1
 :: ----------------------------------------------------------------------------------------------------------------------
 :: This batch purpose is to create a portable Resource Kit folder with UNIX-like commands for your convenience.
 :: It features mostly command line tools including busybox, SysinternalsSuite, Rkit2003 and 7zip among many.
@@ -97,26 +97,26 @@ call :startup
 :: MAIN :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :main
-REM call :UnxUtils
-REM call :wget
-REM call :curl
-REM call :sevenZip
-REM call :busybox
-REM call :jq
-REM call :cmdow
-REM call :BIND9
-REM call :xmllint
-REM call :sqlite
-REM call :SysinternalsSuite
-REM call :UPX
-REM call :tcpdump
-REM call :trrntzip
-REM call :DirHash
-REM call :apache
-REM call :file
-REM call :Netcat
-REM call :pdftk
-REM call :gitty
+call :UnxUtils
+call :wget
+call :curl
+call :sevenZip
+call :busybox
+call :jq
+call :cmdow
+call :BIND9
+call :xmllint
+call :sqlite
+call :SysinternalsSuite
+call :UPX
+call :tcpdump
+call :trrntzip
+call :DirHash
+call :apache
+call :file
+call :Netcat
+call :pdftk
+call :gitty
 call :tea
 call :Xpdf
 call :Nirsoft
