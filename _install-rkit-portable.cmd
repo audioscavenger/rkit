@@ -9,7 +9,7 @@ REM setlocal enabledelayedexpansion
 ::   under certain conditions; https://www.gnu.org/licenses/gpl-3.0.html
 :: ----------------------------------------------------------------------------------------------------------------------
 :top
-@set version=1.6.3
+@set version=1.6.4
 :: ----------------------------------------------------------------------------------------------------------------------
 :: This batch purpose is to create a portable Resource Kit folder with UNIX-like commands for your convenience.
 :: It features mostly command line tools including busybox, SysinternalsSuite, Rkit2003 and 7zip among many.
@@ -28,6 +28,7 @@ REM setlocal enabledelayedexpansion
 :: - [x] apache benchmark _latest_ + openSSL _latest_
 :: - [ ] blat mail _latest_
 :: - [x] busybox _latest_
+:: - [x] chdman _latest_
 :: - [x] cmdow _latest_
 :: - [x] curl _latest_
 :: - [x] BIND9 + dig _latest_
@@ -45,7 +46,6 @@ REM setlocal enabledelayedexpansion
 :: - [x] sqlite _latest_
 :: - [x] SysinternalsSuite _latest_
 :: - [x] tcpdump _latest_
-:: - [x] trrntzip _latest_
 :: - [x] UnxUtils _latest_
 :: - [x] upx _latest_
 :: - [x] wget _latest_
@@ -110,7 +110,6 @@ call :sqlite
 call :SysinternalsSuite
 call :UPX
 call :tcpdump
-call :trrntzip
 call :DirHash
 call :apache
 call :file
@@ -189,6 +188,14 @@ call :power_download https://github.com/ritchielawrence/cmdow/zipball/master %TM
 call :power_unzip %TMP%\cmdow.zip cmdow.exe
 goto :EOF
 
+:chdman
+echo %c%%~0 %END%
+:: virtual hard disk manager for retro games
+call :power_download https://cdn.discordapp.com/attachments/438686828418039818/776962833412784128/CHDMAN.zip %TMP%\CHDMAN.zip
+call :power_unzip %TMP%\CHDMAN.zip *.exe
+call :power_unzip %TMP%\CHDMAN.zip *.bat
+goto :EOF
+
 :gawk
 echo %c%%~0 %END%
 :: awk is included in busybox but it's a very limited version and not GNU
@@ -254,12 +261,6 @@ echo %c%%~0 %END%
 :: http://chiselapp.com/user/rkeene/repository/tcpdump-windows-wrapper/index
 :: tcpdump for windows
 call :power_download "http://chiselapp.com/user/rkeene/repository/tcpdump-windows-wrapper/raw/tcpdump.exe?name=2e3d4d01fa597e1f50ba3ead8f18b8eeacb83812" .\tcpdump.exe
-goto :EOF
-
-:trrntzip
-echo %c%%~0 %END%
-:: trrntzip for windows: standardize CRC for romset zipfiles for MAME
-call :power_download "https://cfhcable.dl.sourceforge.net/project/trrntzip/trrntzip/TorrentZip v0.2/trrntzip_v02_win.zip" .\trrntzip.exe
 goto :EOF
 
 :DirHash
