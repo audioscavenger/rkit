@@ -9,7 +9,7 @@ REM setlocal enabledelayedexpansion
 ::   under certain conditions; https://www.gnu.org/licenses/gpl-3.0.html
 :: ----------------------------------------------------------------------------------------------------------------------
 :top
-@set version=1.6.4
+@set version=1.6.6
 :: ----------------------------------------------------------------------------------------------------------------------
 :: This batch purpose is to create a portable Resource Kit folder with UNIX-like commands for your convenience.
 :: It features mostly command line tools including busybox, SysinternalsSuite, Rkit2003 and 7zip among many.
@@ -24,34 +24,36 @@ REM setlocal enabledelayedexpansion
 :: /!\ Warning: starting this batch with ADMIN rights will alter SYSTEM settings. Read carefully what it does.
 :: /!\ Warning: there may be a bug in :setup_7zip_Extn when PROGRAMS=C:\Program Files (x86) because of the parenthesis
 :: ----------------------------------------------------------------------------------------------------------------------
-:: - [x] 7zip _latest_
-:: - [x] apache benchmark _latest_ + openSSL _latest_
+:: - [ ] Windows Server 2003 Resource Kit Tools
 :: - [ ] blat mail _latest_
+:: - [ ] mailsend-go _latest_
+:: - [x] 7zip _latest_
+:: - [x] BIND9 + dig _latest_
+:: - [x] NirCmd _latest_
+:: - [x] NirSoft _latest_
+:: - [x] Pdftk free _latest_
+:: - [x] SysinternalsSuite _latest_
+:: - [x] UnxUtils _latest_
+:: - [x] XMLStarlet _latest_
+:: - [x] XpdfReader _latest_
+:: - [x] apache benchmark _latest_ + openSSL _latest_
 :: - [x] busybox _latest_
 :: - [x] chdman _latest_
 :: - [x] cmdow _latest_
 :: - [x] curl _latest_
-:: - [x] BIND9 + dig _latest_
-:: - [x] msvcr110.dll  _as-needed_
 :: - [x] dirhash _latest_
+:: - [x] exiftool _latest_
 :: - [x] file _latest_
 :: - [x] gawk _latest_
 :: - [x] gitty _latest_
 :: - [x] jq _latest_
-:: - [ ] mailsend-go _latest_
+:: - [x] msvcr110.dll  _as-needed_
 :: - [x] netcat _latest_
-:: - [x] NirSoft _latest_
-:: - [x] NirCmd _latest_
-:: - [x] Pdftk free _latest_
 :: - [x] sqlite _latest_
-:: - [x] SysinternalsSuite _latest_
 :: - [x] tcpdump _latest_
-:: - [x] UnxUtils _latest_
 :: - [x] upx _latest_
 :: - [x] wget _latest_
-:: - [ ] Windows Server 2003 Resource Kit Tools
-:: - [x] XMLStarlet _latest_
-:: - [x] XpdfReader _latest_
+:: - [x] whosip _latest_ replaces sysinternal's whois
 :: + install 7zip 21.03
 :: + add/update 7zip file associations for local user  (/!\ ==> or ALL USERS   if started as ADMIN!)
 :: + update PATH variable for local user (prepend)     (/!\ ==> or SYSTEM PATH if started as ADMIN! (append))
@@ -111,6 +113,7 @@ call :SysinternalsSuite
 call :UPX
 call :tcpdump
 call :DirHash
+call :exiftool
 call :apache
 call :file
 call :Netcat
@@ -270,6 +273,14 @@ call :power_download https://www.idrix.fr/Root/Samples/DirHash%arch%.zip %TMP%\D
 call :power_unzip %TMP%\DirHash%arch%.zip dirhash.exe
 goto :EOF
 
+:exiftool
+echo %c%%~0 %END%
+:: exif tags manipulation
+call :power_download https://exiftool.org/exiftool-12.84.zip %TMP%\exiftool.zip
+call :power_unzip %TMP%\exiftool.zip *.exe
+move /y exiftool(-k).exe exiftool.exe
+goto :EOF
+
 :apache
 echo %c%%~0 %END%
 :: https://www.apachelounge.com/download/
@@ -365,6 +376,9 @@ REM call :wget_nirsoft http://nirsoft.net/packages/x64tools.zip %TMP%\x64tools.z
 REM call :7unzip %TMP%\x64tools.zip .\ nirsoft123!
 call :wget_nirsoft https://nirsoft.net/utils/nircmd%arch%.zip %TMP%\nircmd%arch%.zip
 call :7unzip %TMP%\nircmd%arch%.zip .\
+call :wget_nirsoft hhttps://www.nirsoft.net/utils/whosip.zip %TMP%\whosip.zip
+call :7unzip %TMP%\whosip.zip .\
+move /y whosip.exe whois.exe
 goto :EOF
 
 :rktools
