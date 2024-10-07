@@ -9,7 +9,7 @@ REM setlocal enabledelayedexpansion
 ::   under certain conditions; https://www.gnu.org/licenses/gpl-3.0.html
 :: ----------------------------------------------------------------------------------------------------------------------
 :top
-@set version=1.6.6
+@set version=1.6.7
 :: ----------------------------------------------------------------------------------------------------------------------
 :: This batch purpose is to create a portable Resource Kit folder with UNIX-like commands for your convenience.
 :: It features mostly command line tools including busybox, SysinternalsSuite, Rkit2003 and 7zip among many.
@@ -54,6 +54,7 @@ REM setlocal enabledelayedexpansion
 :: - [x] upx _latest_
 :: - [x] wget _latest_
 :: - [x] whosip _latest_ replaces sysinternal's whois
+:: - [x] yt-dlp 2024.09.27
 :: + install 7zip 21.03
 :: + add/update 7zip file associations for local user  (/!\ ==> or ALL USERS   if started as ADMIN!)
 :: + update PATH variable for local user (prepend)     (/!\ ==> or SYSTEM PATH if started as ADMIN! (append))
@@ -122,6 +123,7 @@ call :gitty
 call :tea
 call :Xpdf
 call :Nirsoft
+call :ytdlp
 
 call :post_install
 goto :end
@@ -352,6 +354,13 @@ echo %c%%~0 %END%
 :: Xpdf open source project includes a PDF viewer along with a collection of command line tools which perform various functions on PDF files
 call :power_download "https://dl.xpdfreader.com/xpdf-tools-win-4.03.zip" %TMP%\xpdf-tools-win.zip
 call :7unzip %TMP%\xpdf-tools-win.zip .\ nopassword bin%bits%\
+goto :EOF
+
+:ytdlp
+echo %c%%~0 %END%
+:: https://github.com/yt-dlp/yt-dlp
+:: download anything even playlists!
+call :power_download "https://github.com/yt-dlp/yt-dlp/releases/download/2024.09.27/yt-dlp.exe" .\yt-dlp.exe
 goto :EOF
 
 :Nirsoft
