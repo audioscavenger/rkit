@@ -9,7 +9,7 @@ REM setlocal enabledelayedexpansion
 ::   under certain conditions; https://www.gnu.org/licenses/gpl-3.0.html
 :: ----------------------------------------------------------------------------------------------------------------------
 :top
-@set version=1.6.7
+@set version=1.6.8
 :: ----------------------------------------------------------------------------------------------------------------------
 :: This batch purpose is to create a portable Resource Kit folder with UNIX-like commands for your convenience.
 :: It features mostly command line tools including busybox, SysinternalsSuite, Rkit2003 and 7zip among many.
@@ -156,10 +156,12 @@ goto :EOF
 :curl
 echo %c%%~0 %END%
 :: https://curl.se/windows/
-call :power_download https://curl.se/windows/dl-7.82.0_2/curl-7.82.0_2-win%bits%-mingw.zip %TMP%\curl-mingw.zip
-call :power_unzip %TMP%\curl-mingw.zip curl-ca-bundle.crt keep
-call :power_unzip %TMP%\curl-mingw.zip curl.exe keep
-call :power_unzip %TMP%\curl-mingw.zip libcurl-x%bits%.dll
+REM call :power_download https://curl.se/windows/dl-7.82.0_2/curl-7.82.0_2-win%bits%-mingw.zip %TMP%\curl-mingw.zip
+call :power_download https://curl.se/windows/dl-8.15.0_4/curl-8.15.0_4-win%bits%-mingw.zip %TMP%\curl.zip
+call :power_unzip %TMP%\curl.zip curl-ca-bundle.crt keep
+call :power_unzip %TMP%\curl.zip curl.exe keep
+call :power_unzip %TMP%\curl.zip libcurl-x%bits%.dll
+call :power_unzip %TMP%\curl.zip libcurl-x%bits%.def
 goto :EOF
 
 :sevenZip
