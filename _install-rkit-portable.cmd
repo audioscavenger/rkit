@@ -9,7 +9,7 @@ REM setlocal enabledelayedexpansion
 ::   under certain conditions; https://www.gnu.org/licenses/gpl-3.0.html
 :: ----------------------------------------------------------------------------------------------------------------------
 :top
-@set version=1.6.8
+@set version=1.6.9
 :: ----------------------------------------------------------------------------------------------------------------------
 :: This batch purpose is to create a portable Resource Kit folder with UNIX-like commands for your convenience.
 :: It features mostly command line tools including busybox, SysinternalsSuite, Rkit2003 and 7zip among many.
@@ -49,13 +49,14 @@ REM setlocal enabledelayedexpansion
 :: - [x] jq _latest_
 :: - [x] msvcr110.dll  _as-needed_
 :: - [x] netcat _latest_
+:: - [x] nssm _latest_
 :: - [x] sqlite _latest_
 :: - [x] tcpdump _latest_
 :: - [x] upx _latest_
 :: - [x] wget _latest_
 :: - [x] whosip _latest_ replaces sysinternal's whois
-:: - [x] yt-dlp 2024.09.27
-:: + install 7zip 21.03
+:: - [x] yt-dlp 2026.03.17
+:: + install 7zip 25.01
 :: + add/update 7zip file associations for local user  (/!\ ==> or ALL USERS   if started as ADMIN!)
 :: + update PATH variable for local user (prepend)     (/!\ ==> or SYSTEM PATH if started as ADMIN! (append))
 :: + compress every DLL with UPX
@@ -118,6 +119,7 @@ call :exiftool
 call :apache
 call :file
 call :Netcat
+call :nssm
 call :pdftk
 call :gitty
 call :tea
@@ -168,8 +170,8 @@ goto :EOF
 echo %c%%~0 %END%
 :: https://sourceforge.net/projects/sevenzip/files/7-Zip/
 :: 7zip first, in any case we need 7z.exe
-set ver7zMaj=21
-set ver7zMin=07
+set ver7zMaj=25
+set ver7zMin=01
 call :power_download https://downloads.sourceforge.net/project/sevenzip/7-Zip/%ver7zMaj%.%ver7zMin%/7z%ver7zMaj%%ver7zMin%%arch%.exe %TMP%\7z%ver7zMaj%%ver7zMin%%arch%.exe
 call :install_7zip %TMP%\7z%ver7zMaj%%ver7zMin%%arch%.exe
 call :setup_7zip_Extn
@@ -322,6 +324,19 @@ call :power_download https://joncraton.org/files/nc111nt.zip %TMP%\nc111nt.zip
 call :7unzip %TMP%\nc111nt.zip .\ nc nc.exe
 goto :EOF
 
+:nssm
+echo %c%%~0 %END%
+:: nssm is a service helper which doesn't suck. srvany and other service helper programs suck because they don't handle failure
+:: of the application running as a service. If you use such a program you may see a service listed as started when in fact the
+:: application has died. nssm monitors the running service and will restart it if it dies. With nssm you know that if a service
+:: says it's running, it really is. Alternatively, if your application is well-behaved you can configure nssm to absolve all
+:: responsibility for restarting it and let Windows take care of recovery actions.
+:: https://nssm.cc/download
+:: example use: nc -l -p 23 -t -e cmd.exe
+call :power_download https://nssm.cc/release/nssm-2.24.zip %TMP%\nssm.zip
+call :7unzip %TMP%\nssm.zip .\ nopassword nssm.exe
+goto :EOF
+
 :pdftk
 echo %c%%~0 %END%
 :: unfortunately their installer cannot be unzipped, we will use the portable release instead
@@ -362,7 +377,7 @@ goto :EOF
 echo %c%%~0 %END%
 :: https://github.com/yt-dlp/yt-dlp
 :: download anything even playlists!
-call :power_download "https://github.com/yt-dlp/yt-dlp/releases/download/2024.09.27/yt-dlp.exe" .\yt-dlp.exe
+call :power_download "https://github.com/yt-dlp/yt-dlp/releases/download/2026.03.17/yt-dlp.exe" .\yt-dlp.exe
 goto :EOF
 
 :Nirsoft

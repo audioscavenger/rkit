@@ -24,25 +24,40 @@ IF /I     "%~1"=="m4a"  set "ext=m4a" & shift /1
 IF /I     "%~1"=="loop" goto :loop
 
 for %%a in (%*) DO (
-  IF /I    "%%~xa"==".url" (call :url %%a) ELSE call :url_dl %%a
+  IF EXIST %%a (
+    REM :: file is a shortcut
+    IF /I "%%~xa"==".url" call :parse_shortcut %%a
+    REM :: file is a text file full of urls
+    IF /I "%~x1"==".txt" for /f "eol=#" %%u in (%1) DO call :url_dl "%%u"
+  ) ELSE (
+    REM :: not a file but a url passed as argument
+    call :url_dl %%a
+  )
 )
+
 
 goto :end
 
 
-:url
+:parse_shortcut
 title %~n1
-REM pushd %~sdp1
+pushd %~sdp1
 
 for /f "usebackq tokens=1,* delims==" %%a in (`type %1`) DO (
   REM echo IF "%%~a"=="URL" set url=%%b
   REM pause
-echo %%a
   IF "%%~a"=="URL" set url=%%b
 )
-
-echo call :url_dl "%url%"
 call :url_dl "%url%"
+
+:: url shortcuts have this structure:
+::  [InternetShortcut]
+::  URL=https://www.youtube.com/feed/playlists
+::  IDList=
+::  HotKey=0
+::  IconFile=E:\users\user\shortcutCache\xyz=.ico
+::  IconIndex=0
+
 goto :EOF
 
 :loop
