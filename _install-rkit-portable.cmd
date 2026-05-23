@@ -9,7 +9,7 @@ REM setlocal enabledelayedexpansion
 ::   under certain conditions; https://www.gnu.org/licenses/gpl-3.0.html
 :: ----------------------------------------------------------------------------------------------------------------------
 :top
-@set version=1.6.9
+@set version=1.6.10
 :: ----------------------------------------------------------------------------------------------------------------------
 :: This batch purpose is to create a portable Resource Kit folder with UNIX-like commands for your convenience.
 :: It features mostly command line tools including busybox, SysinternalsSuite, Rkit2003 and 7zip among many.
@@ -29,6 +29,7 @@ REM setlocal enabledelayedexpansion
 :: - [ ] mailsend-go _latest_
 :: - [x] 7zip _latest_
 :: - [x] BIND9 + dig _latest_
+:: - [x] ffmpeg+ffprobe 6.1
 :: - [x] NirCmd _latest_
 :: - [x] NirSoft _latest_
 :: - [x] Pdftk free _latest_
@@ -52,7 +53,7 @@ REM setlocal enabledelayedexpansion
 :: - [x] nssm _latest_
 :: - [x] sqlite _latest_
 :: - [x] tcpdump _latest_
-:: - [x] upx _latest_
+:: - [x] upx 5.1.1
 :: - [x] wget _latest_
 :: - [x] whosip _latest_ replaces sysinternal's whois
 :: - [x] yt-dlp 2026.03.17
@@ -261,7 +262,7 @@ goto :EOF
 echo %c%%~0 %END%
 :: https://github.com/upx/upx/releases
 :: UPX is a free, portable, extendable, high-performance executable packer for several executable formats.
-call :power_download https://github.com/upx/upx/releases/download/v3.96/upx-3.96-win%bits%.zip %TMP%\upx-win.zip
+call :power_download https://github.com/upx/upx/releases/download/v5.1.1/upx-5.1.1-win%bits%.zip %TMP%\upx-win.zip
 call :power_unzip %TMP%\upx-win.zip upx.exe
 goto :EOF
 
@@ -378,6 +379,16 @@ echo %c%%~0 %END%
 :: https://github.com/yt-dlp/yt-dlp
 :: download anything even playlists!
 call :power_download "https://github.com/yt-dlp/yt-dlp/releases/download/2026.03.17/yt-dlp.exe" .\yt-dlp.exe
+goto :EOF
+
+:ffmpeg
+echo %c%%~0 %END%
+:: https://ffbinaries.com/downloads
+call :power_download "https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffmpeg-6.1-win-64.zip" %TMP%\ffmpeg-6.1-win-64.zip
+call :power_download "https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v6.1/ffprobe-6.1-win-64.zip" %TMP%\fprobe-6.1-win-64.zip
+call :7unzip %TMP%\ffmpeg-6.1-win-64.zip .\
+call :7unzip %TMP%\fprobe-6.1-win-64.zip .\
+
 goto :EOF
 
 :Nirsoft
