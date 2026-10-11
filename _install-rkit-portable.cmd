@@ -24,17 +24,16 @@ REM setlocal enabledelayedexpansion
 :: /!\ Warning: starting this batch with ADMIN rights will alter SYSTEM settings. Read carefully what it does.
 :: /!\ Warning: there may be a bug in :setup_7zip_Extn when PROGRAMS=C:\Program Files (x86) because of the parenthesis
 :: ----------------------------------------------------------------------------------------------------------------------
-:: - [ ] Windows Server 2003 Resource Kit Tools
-:: - [ ] blat mail _latest_
-:: - [ ] mailsend-go _latest_
+:: - [-] Windows Server 2003 Resource Kit Tools
+:: - [-] blat mail _latest_
+:: - [-] mailsend-go _latest_
+:: - [-] UnxUtils cancelled - we use busybox only
 :: - [x] 7zip _latest_
 :: - [x] BIND9 + dig _latest_
-:: - [x] ffmpeg+ffprobe 6.1
 :: - [x] NirCmd _latest_
 :: - [x] NirSoft _latest_
 :: - [x] Pdftk free _latest_
 :: - [x] SysinternalsSuite _latest_
-:: - [-] UnxUtils cancelled - we use busybox only
 :: - [x] XMLStarlet _latest_
 :: - [x] XpdfReader _latest_
 :: - [x] apache benchmark _latest_ + openSSL _latest_
@@ -44,13 +43,16 @@ REM setlocal enabledelayedexpansion
 :: - [x] curl _latest_
 :: - [x] dirhash _latest_
 :: - [x] exiftool _latest_
+:: - [x] ffmpeg+ffprobe 6.1
 :: - [x] file _latest_
+:: - [x] fzf _latest_
 :: - [x] gawk _latest_
 :: - [x] gitty _latest_
 :: - [x] jq _latest_
 :: - [x] msvcr110.dll  _as-needed_
 :: - [x] netcat _latest_
 :: - [x] nssm _latest_
+:: - [x] BurntSushi.ripgrep.MSVC _latest_
 :: - [x] sqlite _latest_
 :: - [x] tcpdump _latest_
 :: - [x] upx 5.1.1
@@ -105,6 +107,7 @@ call :startup
 REM call :UnxUtils
 call :wget
 call :curl
+call :gawk
 call :busybox
 call :sevenZip
 call :jq
@@ -127,6 +130,8 @@ call :tea
 call :Xpdf
 call :Nirsoft
 call :ytdlp
+call :fsf
+call :rigrep
 
 call :post_install
 goto :end
@@ -212,6 +217,19 @@ echo %c%%~0 %END%
 :: awk is included in busybox but it's a very limited version and not GNU
 call :power_download https://downloads.sourceforge.net/project/gnuwin32/gawk/3.1.6-1/gawk-3.1.6-1-bin.zip %TMP%\gawk-3.1.6-1-bin.zip
 call :power_unzip %TMP%\gawk-3.1.6-1-bin.zip gawk.exe
+goto :EOF
+
+:fzf
+echo %c%%~0 %END%
+winget install fzf
+IF EXIST %LOCALAPPDATA%\Microsoft\WinGet\Links\fzf.exe copy /y  %LOCALAPPDATA%\Microsoft\WinGet\Links\fzf.exe .\
+goto :EOF
+
+:rigrep
+echo %c%%~0 %END%
+REM ripgrep (command name: rg) is a lightning-fast, line-oriented command-line search tool that recursively searches directories for regular expression (regex) patterns. Created by Andrew Gallant and built in Rust, it is widely used by developers as a modern, significantly faster alternative to traditional tools like grep, ack, and The Silver Searcher (ag).
+winget install BurntSushi.ripgrep.MSVC
+IF EXIST %LOCALAPPDATA%\Microsoft\WinGet\Links\rg.exe copy /y  %LOCALAPPDATA%\Microsoft\WinGet\Links\rg.exe .\
 goto :EOF
 
 :XMLStarlet
