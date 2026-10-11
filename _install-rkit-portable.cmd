@@ -9,7 +9,7 @@ REM setlocal enabledelayedexpansion
 ::   under certain conditions; https://www.gnu.org/licenses/gpl-3.0.html
 :: ----------------------------------------------------------------------------------------------------------------------
 :top
-@set version=1.6.10
+@set version=1.6.11
 :: ----------------------------------------------------------------------------------------------------------------------
 :: This batch purpose is to create a portable Resource Kit folder with UNIX-like commands for your convenience.
 :: It features mostly command line tools including busybox, SysinternalsSuite, Rkit2003 and 7zip among many.
@@ -34,7 +34,7 @@ REM setlocal enabledelayedexpansion
 :: - [x] NirSoft _latest_
 :: - [x] Pdftk free _latest_
 :: - [x] SysinternalsSuite _latest_
-:: - [x] UnxUtils _latest_
+:: - [-] UnxUtils cancelled - we use busybox only
 :: - [x] XMLStarlet _latest_
 :: - [x] XpdfReader _latest_
 :: - [x] apache benchmark _latest_ + openSSL _latest_
@@ -56,7 +56,7 @@ REM setlocal enabledelayedexpansion
 :: - [x] upx 5.1.1
 :: - [x] wget _latest_
 :: - [x] whosip _latest_ replaces sysinternal's whois
-:: - [x] yt-dlp 2026.03.17
+:: - [x] yt-dlp 2026.08.19
 :: + install 7zip 25.01
 :: + add/update 7zip file associations for local user  (/!\ ==> or ALL USERS   if started as ADMIN!)
 :: + update PATH variable for local user (prepend)     (/!\ ==> or SYSTEM PATH if started as ADMIN! (append))
@@ -102,11 +102,11 @@ call :startup
 :: MAIN :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :main
-call :UnxUtils
+REM call :UnxUtils
 call :wget
 call :curl
-call :sevenZip
 call :busybox
+call :sevenZip
 call :jq
 call :cmdow
 call :BIND9
@@ -136,18 +136,19 @@ goto :end
 
 
 
-:UnxUtils
-echo %c%%~0 %END%
-:: UnxUtils are supposedly deprecated since the win32 port of busybox, however:
-:: - busybox tail cannot process UNC paths
-:: - you are using UNC path, cannot use mklink
-call :power_download https://downloads.sourceforge.net/project/unxutils/unxutils/current/UnxUtils.zip %TMP%\UnxUtils.zip
-call :power_unzip %TMP%\UnxUtils.zip *.exe
-:: just noticed how slow is UnxUtils xargs compared to busybox's
-del /f /q xargs.exe 2>NUL
-:: recently noticed UnxUtils tee doesnt handle colors
-del /f /q tee.exe 2>NUL
-goto :EOF
+REM :UnxUtils deprecated
+REM REM UnxUtils grep cannot handle forward slashes.
+REM echo %c%%~0 %END%
+REM :: UnxUtils are supposedly deprecated since the win32 port of busybox, however:
+REM :: - busybox tail cannot process UNC paths
+REM :: - you are using UNC path, cannot use mklink
+REM call :power_download https://downloads.sourceforge.net/project/unxutils/unxutils/current/UnxUtils.zip %TMP%\UnxUtils.zip
+REM call :power_unzip %TMP%\UnxUtils.zip *.exe
+REM :: just noticed how slow is UnxUtils xargs compared to busybox's
+REM del /f /q xargs.exe 2>NUL
+REM :: recently noticed UnxUtils tee doesnt handle colors
+REM del /f /q tee.exe 2>NUL
+REM goto :EOF
 
 :wget
 echo %c%%~0 %END%
@@ -378,7 +379,7 @@ goto :EOF
 echo %c%%~0 %END%
 :: https://github.com/yt-dlp/yt-dlp
 :: download anything even playlists!
-call :power_download "https://github.com/yt-dlp/yt-dlp/releases/download/2026.03.17/yt-dlp.exe" .\yt-dlp.exe
+call :power_download "https://github.com/yt-dlp/yt-dlp/releases/download/2026.08.19/yt-dlp.exe" .\yt-dlp.exe
 goto :EOF
 
 :ffmpeg
@@ -600,7 +601,7 @@ call :counterInc
 set choice=n
 :: no mklink for XP so busybox will unfortunately create hardlinks for a total of 88MB
 IF [%WindowsVersion%]==[XP] (
-  busybox --install %INSTALLDIR%
+  busybox.exe --install %INSTALLDIR%
 ) ELSE (
   IF %ADMIN% EQU 0 (
     :: mklink won't overwrite existing files
@@ -614,7 +615,7 @@ IF [%WindowsVersion%]==[XP] (
   )
 )
 
-IF [%choice%]==[y] busybox --install %INSTALLDIR%
+IF [%choice%]==[y] busybox.exe --install %INSTALLDIR%
 echo:
 
 :: timeout, date, time, expand, echo are all Windows command

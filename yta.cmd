@@ -9,6 +9,8 @@ setlocal
 set playlist_urls=%TEMP%\%~n0.playlist.txt
 set audioFormat=--audio-format m4a/mp3
 set videoFormat=-t mp4
+set maxAudioQuality=0
+set maxAudioQuality=128K
 set maxVideoQuality=480
 REM set maxVideoQuality=720
 set USAGE=
@@ -20,6 +22,8 @@ set NODE_PATH=--js-runtimes node:E:\Gitea\nQpuppeteer\nQpuppeteer\x64\node-v24.1
 set ffmpeg_path=E:\wintools\PortableApps\Magick\
 
 :prechecks
+echo ---------------------------------- maxAudioQuality=%maxAudioQuality% ----------------------------------
+
 del /f /q %playlist_urls% >NUL 2>&1
 
 call :arguments %*
@@ -178,8 +182,8 @@ REM %~sdp0\yt-dlp --list-formats %NODE_PATH% --cookies-from-browser %BROWSER%%PR
 REM if %ext%==m4a %~sdp0\yt-dlp --extract-audio -S aext:m4a:mp3,acodec:aac:mp3   --audio-quality 0 --no-keep-video --embed-metadata --embed-thumbnail --add-metadata %NODE_PATH% --cookies-from-browser %BROWSER%%PROFILE_PATH% --batch-file %playlist_urls%
 REM if %ext%==mp3 %~sdp0\yt-dlp --extract-audio --audio-format mp3               --audio-quality 0 --no-keep-video --embed-metadata --embed-thumbnail --add-metadata %NODE_PATH% --cookies-from-browser %BROWSER%%PROFILE_PATH% --batch-file %playlist_urls%
 
-echo %~sdp0\yt-dlp --extract-audio %audioFormat% --audio-quality 0 --no-keep-video --embed-metadata --embed-thumbnail --add-metadata %NODE_PATH% --cookies-from-browser %BROWSER%%PROFILE_PATH% --batch-file %playlist_urls% --ffmpeg-location %ffmpeg_path%
-%~sdp0\yt-dlp --extract-audio %audioFormat% --audio-quality 0 --no-keep-video --embed-metadata --embed-thumbnail --add-metadata %NODE_PATH% --cookies-from-browser %BROWSER%%PROFILE_PATH% --batch-file %playlist_urls% --ffmpeg-location %ffmpeg_path%
+echo %~sdp0\yt-dlp --extract-audio %audioFormat% --audio-quality %maxAudioQuality% --no-keep-video --embed-metadata --embed-thumbnail --add-metadata %NODE_PATH% --cookies-from-browser %BROWSER%%PROFILE_PATH% --batch-file %playlist_urls% --ffmpeg-location %ffmpeg_path%
+%~sdp0\yt-dlp --extract-audio %audioFormat% --audio-quality %maxAudioQuality% --no-keep-video --embed-metadata --embed-thumbnail --add-metadata %NODE_PATH% --cookies-from-browser %BROWSER%%PROFILE_PATH% --batch-file %playlist_urls% --ffmpeg-location %ffmpeg_path%
 
 goto :EOF
 
@@ -188,8 +192,8 @@ goto :EOF
 echo %~0 %*
 type %1
 
-echo %~sdp0\yt-dlp %videoFormat% -f "bv*[height<=%maxVideoQuality%]+ba/b[height<=%maxVideoQuality%]" --audio-quality 0 --embed-metadata --embed-thumbnail --add-metadata %NODE_PATH% --cookies-from-browser %BROWSER%%PROFILE_PATH% --batch-file %playlist_urls% --ffmpeg-location %ffmpeg_path%
-%~sdp0\yt-dlp %videoFormat% -f "bv*[height<=%maxVideoQuality%]+ba/b[height<=%maxVideoQuality%]" --audio-quality 0 --embed-metadata --embed-thumbnail --add-metadata %NODE_PATH% --cookies-from-browser %BROWSER%%PROFILE_PATH% --batch-file %playlist_urls% --ffmpeg-location %ffmpeg_path%
+echo %~sdp0\yt-dlp %videoFormat% -f "bv*[height<=%maxVideoQuality%]+ba/b[height<=%maxVideoQuality%]" --audio-quality %maxAudioQuality% --embed-metadata --embed-thumbnail --add-metadata %NODE_PATH% --cookies-from-browser %BROWSER%%PROFILE_PATH% --batch-file %playlist_urls% --ffmpeg-location %ffmpeg_path%
+%~sdp0\yt-dlp %videoFormat% -f "bv*[height<=%maxVideoQuality%]+ba/b[height<=%maxVideoQuality%]" --audio-quality %maxAudioQuality% --embed-metadata --embed-thumbnail --add-metadata %NODE_PATH% --cookies-from-browser %BROWSER%%PROFILE_PATH% --batch-file %playlist_urls% --ffmpeg-location %ffmpeg_path%
 
 goto :EOF
 
