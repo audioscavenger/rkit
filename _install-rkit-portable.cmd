@@ -9,7 +9,7 @@ REM setlocal enabledelayedexpansion
 ::   under certain conditions; https://www.gnu.org/licenses/gpl-3.0.html
 :: ----------------------------------------------------------------------------------------------------------------------
 :top
-@set version=1.6.11
+@set version=1.6.12
 :: ----------------------------------------------------------------------------------------------------------------------
 :: This batch purpose is to create a portable Resource Kit folder with UNIX-like commands for your convenience.
 :: It features mostly command line tools including busybox, SysinternalsSuite, Rkit2003 and 7zip among many.
@@ -80,6 +80,10 @@ set TMPFILE=%TMP%\%~n0.tmp
 set LOGFILE=.\%~n0.log
 set VERBOSE=v
 set RESTART=n
+:: we do not reset REMOTE because it may already be set by the environment
+REM set REMOTE=
+set AUTOMATED=
+
 verify on
 set COUNTER=0
 set SUCCESS=0
@@ -95,7 +99,8 @@ IF NOT EXIST %INSTALLDIR% call :error mkdir - cannot create %INSTALLDIR% & goto 
 pushd %INSTALLDIR%
 
 call :detect_admin_mode
-call :set_colors
+call :detect_windows_version
+IF NOT DEFINED REMOTE call :set_colors
 call :pre_requisites
 call :startup
 
@@ -522,6 +527,10 @@ goto :EOF
 
 :pre_requisites
 echo %c%%~0%END%
+
+:: when connected remotely via a LocalSystem agent, USERNAME=COMPUTERNAME$ and user is SYSTEM; no access to USERDNSDOMAIN
+IF "%USERNAME:~-1%"=="$" (set "REMOTE=true" & set "AUTOMATED=true")
+
 :: Cannot use where on Windows XP
 :: where powershell >NUL 2>&1
 REM IF %ERRORLEVEL% NEQ 0 call :error powershell NOT FOUND & goto :end
@@ -547,27 +556,27 @@ set msvc_url=http://www.dlldownloader.com/msvcr110-dll/download/e481de48e6b9658e
 )
 goto :EOF
 
-:detect_admin_mode [num]
-IF DEFINED DEBUG echo DEBUG: %m%%~n0 %~0 %HIGH%%*%END% 1>&2
+
+:detect_admin_mode [req]
+IF DEFINED VERBOSE echo VERBOSE: %c%%~n0 %~0 %HIGH%%*%END% 1>&2
 :: https://stackoverflow.com/questions/1894967/how-to-request-administrator-access-inside-a-batch-file
 
 set req=%1
-set arch=
-set archbits=
 set bits=32
 set bitx=x86
 IF DEFINED PROCESSOR_ARCHITEW6432 echo WARNING: running 32bit cmd on 64bit system 1>&2
 if "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
   set arch=-x64
-  set archbits=64
   set bits=64
   set bitx=x64
 )
-%SystemRoot%\system32\whoami /groups | findstr "12288" >NUL && set "ADMIN=0" || set "ADMIN=1"
+REM %SystemRoot%\system32\whoami /groups | findstr "12288" >NUL && set "ADMIN=0" || set "ADMIN=1"
+REM net session  >NUL 2>&1 && set "ADMIN=0" || set "ADMIN=1"
+reg add hklm /f >NUL 2>&1 && set "ADMIN=0" || set "ADMIN=1"
 IF %ADMIN% EQU 0 (
-  echo Batch started with %HIGH%%y%ADMIN%END% rights 1>&2
+  echo Batch started with ADMIN rights 1>&2
 ) ELSE (
-  echo Batch started with %y%USER%END% rights 1>&2
+  echo Batch started with USER rights 1>&2
 )
 
 IF DEFINED req (
@@ -576,37 +585,82 @@ IF DEFINED req (
       echo %y%Batch started with USER privileges, when ADMIN was needed.%END% 1>&2
       IF DEFINED AUTOMATED exit
       REM :UACPrompt
-      net localgroup administrators | findstr "%USERNAME%" >NUL || call :error %~0: User %USERNAME% is NOT localadmin
-      echo Set UAC = CreateObject^("Shell.Application"^) >"%TMP%\getadmin.vbs"
+      gpresult /R | findstr BUILTIN\Administrators >NUL || net session >NUL 2>&1 || (call :error %~0: User %USERNAME% is NOT localadmin & exit 1)
+      echo Set UAC = CreateObject^("Shell.Application"^) >"%TEMP%\getadmin.vbs"
       REM :: WARNING: cannot use escaped parameters with this one:
       IF DEFINED params (
-      echo UAC.ShellExecute "cmd.exe", "/c %~s0 %params:"=""%", "", "runas", 1 >>"%TMP%\getadmin.vbs"
-      ) ELSE echo UAC.ShellExecute "cmd.exe", "/c %~s0", "", "runas", 1 >>"%TMP%\getadmin.vbs"
-      CScript //B "%TMP%\getadmin.vbs"
-      del /q "%TMP%\getadmin.vbs"
+        echo UAC.ShellExecute "cmd.exe", "/c %~s0 %params:"=""%", "", "runas", 1 >>"%TEMP%\getadmin.vbs"
+      ) ELSE echo UAC.ShellExecute "cmd.exe", "/c %~s0", "", "runas", 1 >>"%TEMP%\getadmin.vbs"
+      CScript //B "%TEMP%\getadmin.vbs"
+      del /q "%TEMP%\getadmin.vbs"
     ) ELSE (
       echo %r%Batch started with ADMIN privileges, when USER was needed. EXIT%END% 1>&2
-      IF NOT DEFINED AUTOMATED pause 1>&2
+      IF NOT DEFINED AUTOMATED timeout /t 5 1>&2
     )
-    exit
+    exit 1
+  )
+)
+goto :EOF
+
+
+:detect_windows_version
+IF DEFINED REFRESH (
+  set osType=
+  set WindowsVersion=
+)
+
+:: 1. are we set already?
+IF DEFINED WindowsVersion exit /b 0
+
+:: set local folders
+IF NOT DEFINED LOGS    set LOGS=%TEMP%
+
+:: 2. is version already detected prior?
+for %%o in (server workstation) DO (
+  IF EXIST %LOGS%\system.version.%%o.txt (
+    set osType=%%o
+    for /f %%v in (%LOGS%\system.version.%%o.txt) do set WindowsVersion=%%v
+    exit /b 0
   )
 )
 
-set osType=workstation
-wmic os get Caption /value | findstr Server >%TMP%\wmic.tmp.txt && set "osType=server" || ver >%TMP%\ver.tmp.txt
+reg query HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\ProductOptions /v ProductType | findstr WinNT >NUL && set "osType=workstation" || set "osType=server"
 
-:: https://www.lifewire.com/windows-version-numbers-2625171
-:: Microsoft Windows [Version 10.0.17763.615]
-IF "%osType%"=="workstation" (
-  findstr /C:"Version 10.0" %TMP%\ver.tmp.txt >NUL && set "WindowsVersion=10"    && exit /b 0
-  findstr /C:"Version 6.3"  %TMP%\ver.tmp.txt >NUL && set "WindowsVersion=8.1"   && exit /b 0
-  findstr /C:"Version 6.2"  %TMP%\ver.tmp.txt >NUL && set "WindowsVersion=8"     && exit /b 0
-  findstr /C:"Version 6.1"  %TMP%\ver.tmp.txt >NUL && set "WindowsVersion=7"     && exit /b 0
-  findstr /C:"Version 6.0"  %TMP%\ver.tmp.txt >NUL && set "WindowsVersion=Vista" && exit /b 0
-  findstr /C:"Version 5.1"  %TMP%\ver.tmp.txt >NUL && set "WindowsVersion=XP"    && exit /b 0
-) ELSE (
-  for /f "tokens=4" %%a in (%TMP%\wmic.tmp.txt) do    set "WindowsVersion=%%a"   && exit /b 0
+:: 3. detect version
+:: too slow: systeminfo
+  REM Host Name:                 IMP-LD-01
+  REM OS Name:                   Microsoft Windows 10 Enterprise
+  REM OS Version:                10.0.19044 N/A Build 19044: this command is slow as F, we'll use a known build list instead
+:: too slow: powershell -command (Get-CimInstance Win32_OperatingSystem).Caption | findstr Server >%LOGS%\ver.tmp && set "osType=server" || ver >%LOGS%\ver.tmp
+  REM Microsoft Windows Server 2025 xxxx
+:: fast: ver
+ver >%LOGS%\ver.tmp
+
+REM :: https://learn.microsoft.com/en-us/windows/release-health/windows-server-release-info
+IF "%osType%"=="server" (
+  findstr /C:"Version 10.0.26100" %LOGS%\ver.tmp >NUL && <NUL set /p =2025 >%LOGS%\system.version.server.txt
+  findstr /C:"Version 10.0.20348" %LOGS%\ver.tmp >NUL && <NUL set /p =2022 >%LOGS%\system.version.server.txt
+  findstr /C:"Version 10.0.17763" %LOGS%\ver.tmp >NUL && <NUL set /p =2019 >%LOGS%\system.version.server.txt
+  findstr /C:"Version 10.0.14393" %LOGS%\ver.tmp >NUL && <NUL set /p =2016 >%LOGS%\system.version.server.txt
+  findstr /C:"Version 6.2.9200"   %LOGS%\ver.tmp >NUL && <NUL set /p =2012 >%LOGS%\system.version.server.txt
+  findstr /C:"Version 6.0.600"    %LOGS%\ver.tmp >NUL && <NUL set /p =2008 >%LOGS%\system.version.server.txt
 )
+IF EXIST %LOGS%\system.version.server.txt for /f %%v in (%LOGS%\system.version.server.txt) DO (set "WindowsVersion=%%v" & exit /b 0)
+
+REM :: https://www.lifewire.com/windows-version-numbers-2625171
+IF "%osType%"=="workstation" (
+  findstr /C:"Version 11.0" %LOGS%\ver.tmp >NUL && <NUL set /p =11 >%LOGS%\system.version.workstation.txt
+  findstr /C:"Version 10.0" %LOGS%\ver.tmp >NUL && <NUL set /p =10 >%LOGS%\system.version.workstation.txt
+  findstr /C:"Version 6.3"  %LOGS%\ver.tmp >NUL && <NUL set /p =8.1 >%LOGS%\system.version.workstation.txt
+  findstr /C:"Version 6.2"  %LOGS%\ver.tmp >NUL && <NUL set /p =8 >%LOGS%\system.version.workstation.txt
+  findstr /C:"Version 6.1"  %LOGS%\ver.tmp >NUL && <NUL set /p =7 >%LOGS%\system.version.workstation.txt
+  findstr /C:"Version 6.0"  %LOGS%\ver.tmp >NUL && <NUL set /p =Vista >%LOGS%\system.version.workstation.txt
+  findstr /C:"Version 5.1"  %LOGS%\ver.tmp >NUL && <NUL set /p =XP >%LOGS%\system.version.workstation.txt
+)
+IF EXIST %LOGS%\system.version.workstation.txt for /f %%v in (%LOGS%\system.version.workstation.txt) DO (set "WindowsVersion=%%v" & exit /b 0)
+
+echo ERROR: %~0 could not detect WindowsVersion 1>&2
+
 goto :EOF
 
 
@@ -616,24 +670,30 @@ findstr /C:"%~0 OK" %LOGFILE% >NUL 2>&1 && echo %g%%~0 OK && goto :EOF
 echo %c%%~0%END%
 call :counterInc
 
+:: If you have Windows 10 or newer, and turn on Developer Mode you *may* be able to create Symbolic Links without requiring admin privileges.
+
 set choice=n
-:: no mklink for XP so busybox will unfortunately create hardlinks for a total of 88MB
 IF [%WindowsVersion%]==[XP] (
+  REM :: no mklink for XP so busybox will unfortunately create hardlinks for a total of 88MB
   busybox.exe --install %INSTALLDIR%
+  
 ) ELSE (
   IF %ADMIN% EQU 0 (
-    :: mklink won't overwrite existing files
-    FOR /f "usebackq" %%a IN (`busybox.exe --list`) DO 2>NUL (
-      mklink %%a.exe busybox.exe 2>NUL
-    )
+    REM REM :: mklink won't overwrite existing files
+    REM FOR /f "usebackq" %%a IN (`busybox.exe --list ^| findstr /I /V "timeout date time expand echo"`) DO 2>NUL (
+      REM mklink %%a.exe busybox.exe 2>NUL
+    REM )
+    REM :: busybox.exe --install -s creates links!
+    busybox.exe --install -s
+    
   ) ELSE (
-    echo Sorry: you need ADMIN privileges to create links.
+    echo Sorry: you need ADMIN privileges to create symlinks.
     echo Do you want to create hard links instead? Cost = 80MB
     set /p choice=your choice: [N/y] 
   )
 )
-
-IF [%choice%]==[y] busybox.exe --install %INSTALLDIR%
+:: fallback when user is okay wasting their disk space
+IF /I "%choice%"=="y" busybox.exe --install %INSTALLDIR%
 echo:
 
 :: timeout, date, time, expand, echo are all Windows command

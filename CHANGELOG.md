@@ -1,4 +1,5 @@
 ## Contents
+- [v1.6.12](#v1612)
 - [v1.4.6](#v146)
 - [v1.4.5](#v145)
 - [v1.4.0](#v140)
@@ -7,6 +8,16 @@
 - [v1.1.0](#v110)
 - [v1.0.1](#v101)
 - [v1.0.0](#v100)
+
+* v1.6.12
+  * yta.cmd:
+    * fixed --help/USAGE flow, .url shortcut parsing, ffmpeg path quoting
+    * added --update to fetch latest yt-dlp release via curl+jq; auto-detect node path with --node override
+    *-auto-detect firefox profile with --profile override
+    * added --subs to dump subtitles/transcripts
+    * found a way to save diskspace with mklink
+    * updated :detect_admin_mode
+    * updated :detect_windows_version
 
 * v1.4.6
   * removed showJpeg
@@ -57,5 +68,4 @@
 
 * v1.0.0
   * just tested with XP, Seven and 10
-  * found a way to save diskspace with mklink
 
