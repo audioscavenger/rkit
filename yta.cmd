@@ -16,7 +16,7 @@ set videoFormat=-t mp4
 set maxAudioQuality=128K
 set maxVideoQuality=480
 REM set maxVideoQuality=720
-set "SKIP_FLUFF=--no-write-comments --ignore-no-formats-error --no-playlist --no-write-thumbnail"
+set SKIP_FLUFF=--no-write-comments --ignore-no-formats-error --no-playlist --no-write-thumbnail
 
 set USAGE=
 set UPDATE=
@@ -27,10 +27,11 @@ set SUBS_FILENAME=%TMP%\subs
 set lang=en
 
 set BROWSER=firefox
-set PROFILE_PATH="E:\users\firefox-profile-scavenger"
+set BROWSER_PROFILE_PATH=
 set NODE_PATH=
-set ffmpeg_path=E:\wintools\PortableApps\Magick
-
+set FFMPEG_PATH=
+set ITUNES=
+set ITUNES_ADD_PATH=%USERPROFILE%\Music\iTunes\iTunes Media\Automatically Add to iTunes\
 
 :prechecks
 
@@ -39,7 +40,8 @@ where busybox >NUL 2>&1 || (echo error: buxybox not found & exit /b 1)
 del /f /q "%playlist_urls%" >NUL 2>&1
 
 call :detect_node
-call :detect_profile
+call :detect_ffmpeg
+call :detect_browser_profile
 
 :: MSDOS SUCKS SO MUCH: when I pass `%*` to a label that checks each argument, 
 :: the spaces, commas (,), semicolons (;), and equal signs (=) are all treated as native argument separators
@@ -59,7 +61,7 @@ IF /I "%~1"=="--node" (
   IF "%~2"=="" (
     set USAGE=true
   ) ELSE (
-    set NODE_PATH="node:%~2"
+    set NODE_PATH="%~2"
     shift /1
   )
 )
@@ -75,7 +77,7 @@ IF /I "%~1"=="--profile" (
   IF "%~2"=="" (
     set USAGE=true
   ) ELSE (
-    set PROFILE_PATH="%~2"
+    set BROWSER_PROFILE_PATH="%~2"
     shift /1
   )
 )
@@ -85,7 +87,8 @@ IF /I "%~1"=="--video"  set "VIDEO=true" & set "AUDIO=" & set "SUBS="
 IF /I "%~1"=="--audio"  set "VIDEO=" & set "AUDIO=true" & set "SUBS="
 IF /I "%~1"=="--subs"   set "VIDEO=" & set "AUDIO=" & set "SUBS=true"
 IF /I "%~1"=="--dump"   set "DUMP=true"
-IF /I "%~1"=="--prompt"   call :prompt
+IF /I "%~1"=="--ask"    call :ask
+IF /I "%~1"=="--itunes" set "ITUNES=true"
 
 :: main argument is a file:
 call :parse_file "%~1"
@@ -119,6 +122,9 @@ IF DEFINED VERSOSE set QUIET=
 REM powershell -Command "(Get-Content '%playlist_urls%') -replace '\"', '' | Set-Content '%playlist_urls%'"
 busybox sed -i s/"""//g "%playlist_urls%"
 
+:: if requested, import to iTunes and show an error if folder not found
+IF DEFINED ITUNES pushd "%ITUNES_ADD_PATH%"
+
 :: finally, we process all urls in the playlist file
 IF DEFINED VIDEO call :video_dl "%playlist_urls%"
 IF DEFINED AUDIO call :audio_dl "%playlist_urls%"
@@ -131,16 +137,15 @@ goto :end
 
 :detect_node
 if defined NODE_PATH goto :EOF
-setlocal enabledelayedexpansion
 set "FOUND_PATH="
 for /f "delims=" %%p in ('where node 2^>nul') do if not defined FOUND_PATH set "FOUND_PATH=%%~dpp"
 if not defined FOUND_PATH (
   endlocal
   goto :detect_node_fallback
 )
-if "!FOUND_PATH:~-1!"=="\" set "FOUND_PATH=!FOUND_PATH:~0,-1!"
-set "NODE_PATH="node:!FOUND_PATH!""
-for /f "delims=" %%v in ("!NODE_PATH!") do endlocal & set "NODE_PATH=%%v"
+if "!FOUND_PATH:~-1!"=="\" set FOUND_PATH=!FOUND_PATH:~0,-1!
+set NODE_PATH=!FOUND_PATH!
+for /f "delims=" %%v in ("!NODE_PATH!") do endlocal & set NODE_PATH=%%v
 goto :EOF
 
 :detect_node_fallback
@@ -148,11 +153,33 @@ for %%d in (
   "%LOCALAPPDATA%\nvm\.nodejs"
   "%LOCALAPPDATA%\Author Software\nvm\.nodejs"
   "C:\Program Files\nodejs"
-) do if not defined NODE_PATH if exist "%%~d\node.exe" set NODE_PATH="node:%%~d"
+) do if not defined NODE_PATH if exist "%%~d\node.exe" set NODE_PATH="%%~d"
 goto :EOF
 
-:detect_profile
-setlocal enabledelayedexpansion
+:detect_ffmpeg
+if defined FFMPEG_PATH goto :EOF
+set "FOUND_PATH="
+for /f "delims=" %%p in ('where ffmpeg 2^>nul') do if not defined FOUND_PATH set "FOUND_PATH=%%~dpp"
+if not defined FOUND_PATH (
+  endlocal
+  goto :detect_ffmpeg_fallback
+)
+if "!FOUND_PATH:~-1!"=="\" set "FOUND_PATH=!FOUND_PATH:~0,-1!"
+set FFMPEG_PATH=!FOUND_PATH!
+for /f "delims=" %%v in ("!FFMPEG_PATH!") do endlocal & set "FFMPEG_PATH=%%v"
+goto :EOF
+
+:detect_ffmpeg_fallback
+for %%d in (
+  C:\ffmpeg
+  C:\ffmpeg\bin
+  "C:\Program Files\ffmpeg\bin"
+  "C:\Program Files (x86)\ffmpeg\bin"
+  "%LOCALAPPDATA%\Programs\FFmpeg\bin"
+) do if not defined FFMPEG_PATH if exist "%%~d\ffmpeg.exe" set FFMPEG_PATH="%%~d"
+goto :EOF
+
+:detect_browser_profile
 set "FF_DIR=%APPDATA%\Mozilla\Firefox"
 set "REL_PATH="
 set "CUR_PATH="
@@ -186,9 +213,9 @@ if not defined REL_PATH if defined CUR_PATH if "!CUR_DEFAULT!"=="1" set "REL_PAT
 :dp_done
 if defined REL_PATH (
   if exist "%FF_DIR%\!REL_PATH!" (
-    endlocal & set "PROFILE_PATH="%FF_DIR%\%REL_PATH%""
+    endlocal & set BROWSER_PROFILE_PATH=%FF_DIR%\%REL_PATH%
   ) else if exist "!REL_PATH!" (
-    endlocal & set "PROFILE_PATH="!REL_PATH!""
+    endlocal & set BROWSER_PROFILE_PATH=!REL_PATH!
   ) else (
     endlocal
   )
@@ -205,7 +232,7 @@ echo            --mp3           force audio to mp3 (ffmpeg required)
 echo            --m4a           force audio to m4a
 echo          --subs            download /tmp/subs.video_id.en.vtt (english) and transcript /tmp/subs.video_id.en.txt
 echo            --dump          also dump transcript to stdout
-echo          --prompt          loop and prompt for urls
+echo          --ask             loop and ask for urls interactively
 echo          --update          download latest yt-dlp release from GitHub
 echo          --node    ^<path^>  use node at path for yt-dlp js runtime
 echo          --browser ^<name^>  use browser's cookies; *firefox
@@ -252,7 +279,7 @@ goto :EOF
 
 
 
-:prompt
+:ask
 set /P url=url (Ctrl+C to exit)? 
 
 echo "%url%" >>"%playlist_urls%"
@@ -261,13 +288,13 @@ set answer=y
 set /P answer=more? [%answer%] 
 IF /I NOT "%answer%"=="y" goto :EOF
 
-goto :prompt
+goto :ask
 
 
 :extract_url_from_playlist url playlist_urls
 
-IF DEFINED VERSOSE echo %~sdp0\yt-dlp %QUIET% -x --flat-playlist --print webpage_url --js-runtimes %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% %1
-%~sdp0\yt-dlp %QUIET% -x --flat-playlist --print webpage_url --js-runtimes %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% %1 >"%~2"
+IF DEFINED VERSOSE echo %~sdp0\yt-dlp %QUIET% -x --flat-playlist --print webpage_url --js-runtimes "node:%NODE_PATH%" --cookies-from-browser "%BROWSER%:%BROWSER_PROFILE_PATH%" %1
+%~sdp0\yt-dlp %QUIET% -x --flat-playlist --print webpage_url --js-runtimes "node:%NODE_PATH%" --cookies-from-browser "%BROWSER%:%BROWSER_PROFILE_PATH%" %1 >"%~2"
 
 goto :EOF
 
@@ -296,14 +323,14 @@ REM yt-dlp %1 --extractor-args youtube:player_client=android -x -S aext:m4a:mp3 
 
 
 :: to list audio formats available you would need to to process each url one by one so why bother... newest command fallsback from m4a to mp3
-REM %~sdp0\yt-dlp %QUIET% --list-formats --js-runtimes %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% %1
+REM %~sdp0\yt-dlp %QUIET% --list-formats --js-runtimes "node:%NODE_PATH%" --cookies-from-browser "%BROWSER%:%BROWSER_PROFILE_PATH%" %1
 
 
-REM if %ext%==m4a %~sdp0\yt-dlp %QUIET% --extract-audio -S aext:m4a:mp3,acodec:aac:mp3   --audio-quality 0 --no-keep-video --embed-metadata --embed-thumbnail --add-metadata --js-runtimes %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% --batch-file %playlist_urls%
-REM if %ext%==mp3 %~sdp0\yt-dlp %QUIET% --extract-audio --audio-format mp3               --audio-quality 0 --no-keep-video --embed-metadata --embed-thumbnail --add-metadata --js-runtimes %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% --batch-file %playlist_urls%
+REM if %ext%==m4a %~sdp0\yt-dlp %QUIET% --extract-audio -S aext:m4a:mp3,acodec:aac:mp3   --audio-quality 0 --no-keep-video --embed-metadata --embed-thumbnail --add-metadata --js-runtimes "node:%NODE_PATH%" --cookies-from-browser "%BROWSER%:%BROWSER_PROFILE_PATH%" --batch-file %playlist_urls%
+REM if %ext%==mp3 %~sdp0\yt-dlp %QUIET% --extract-audio --audio-format mp3               --audio-quality 0 --no-keep-video --embed-metadata --embed-thumbnail --add-metadata --js-runtimes "node:%NODE_PATH%" --cookies-from-browser "%BROWSER%:%BROWSER_PROFILE_PATH%" --batch-file %playlist_urls%
 
-IF DEFINED VERSOSE echo %~sdp0\yt-dlp %QUIET% --extract-audio %audioFormat% --audio-quality %maxAudioQuality% --no-keep-video --embed-metadata --embed-thumbnail --add-metadata --js-runtimes %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% --batch-file "%~1" --ffmpeg-location "%ffmpeg_path%"
-%~sdp0\yt-dlp %QUIET% --extract-audio %audioFormat% --audio-quality %maxAudioQuality% --no-keep-video --embed-metadata --embed-thumbnail --add-metadata --js-runtimes %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% --batch-file "%~1" --ffmpeg-location "%ffmpeg_path%"
+IF DEFINED VERSOSE echo %~sdp0\yt-dlp %QUIET% --extract-audio %audioFormat% --audio-quality %maxAudioQuality% --no-keep-video --embed-metadata --embed-thumbnail --add-metadata --js-runtimes "node:%NODE_PATH%" --cookies-from-browser "%BROWSER%:%BROWSER_PROFILE_PATH%" --batch-file "%~1" --ffmpeg-location "%ffmpeg_path%"
+%~sdp0\yt-dlp %QUIET% --extract-audio %audioFormat% --audio-quality %maxAudioQuality% --no-keep-video --embed-metadata --embed-thumbnail --add-metadata --js-runtimes "node:%NODE_PATH%" --cookies-from-browser "%BROWSER%:%BROWSER_PROFILE_PATH%" --batch-file "%~1" --ffmpeg-location "%ffmpeg_path%"
 
 goto :EOF
 
@@ -311,8 +338,8 @@ goto :EOF
 :video_dl playlist
 IF DEFINED VERSOSE echo ---------------------------------- maxAudioQuality=%maxAudioQuality% ----------------------------------
 
-IF DEFINED VERSOSE echo %~sdp0\yt-dlp %QUIET% %videoFormat% -f "bv*[height<=%maxVideoQuality%]+ba/b[height<=%maxVideoQuality%]" --audio-quality %maxAudioQuality% --embed-metadata --embed-thumbnail --add-metadata --js-runtimes %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% --batch-file "%~1" --ffmpeg-location "%ffmpeg_path%"
-%~sdp0\yt-dlp %QUIET% %videoFormat% -f "bv*[height<=%maxVideoQuality%]+ba/b[height<=%maxVideoQuality%]" --audio-quality %maxAudioQuality% --embed-metadata --embed-thumbnail --add-metadata --js-runtimes %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% --batch-file "%~1" --ffmpeg-location "%ffmpeg_path%"
+IF DEFINED VERSOSE echo %~sdp0\yt-dlp %QUIET% %videoFormat% -f "bv*[height<=%maxVideoQuality%]+ba/b[height<=%maxVideoQuality%]" --audio-quality %maxAudioQuality% --embed-metadata --embed-thumbnail --add-metadata --js-runtimes "node:%NODE_PATH%" --cookies-from-browser "%BROWSER%:%BROWSER_PROFILE_PATH%" --batch-file "%~1" --ffmpeg-location "%ffmpeg_path%"
+%~sdp0\yt-dlp %QUIET% %videoFormat% -f "bv*[height<=%maxVideoQuality%]+ba/b[height<=%maxVideoQuality%]" --audio-quality %maxAudioQuality% --embed-metadata --embed-thumbnail --add-metadata --js-runtimes "node:%NODE_PATH%" --cookies-from-browser "%BROWSER%:%BROWSER_PROFILE_PATH%" --batch-file "%~1" --ffmpeg-location "%ffmpeg_path%"
 
 goto :EOF
 
@@ -370,25 +397,22 @@ IF DEFINED VERSOSE type %playlist%
 
 :: I found another serious bug: It appears that yt-dlp downloads comments as well... "https://www.youtube.com/watch?v=jNQXAC9IVRw"
 :: This first yt video for instance has 10 million comments and the tool never finishes downloading them: 
-:: `yt-dlp  --skip-download --write-subs --write-auto-subs --sub-langs "en" --extractor-args "youtube:skip=translated_subs" -o "%TMP%\subs.%(id)s" --js-runtimes "node:%LOCALAPPDATA%\Author Software\nvm\.nodejs" --cookies-from-browser firefox:"%APPDATA%\Mozilla\Firefox\Profiles/fp7bk7sf.scavenger-1791166937893" "https://www.youtube.com/watch?v=jNQXAC9IVRw"`
+:: `yt-dlp  --skip-download --write-subs --write-auto-subs --sub-langs "en" --extractor-args "youtube:skip=translated_subs" -o "%TMP%\subs.%(id)s" --js-runtimes "node:%LOCALAPPDATA%\Author Software\nvm\.nodejs" --cookies-from-browser "firefox:%APPDATA%\Mozilla\Firefox\Profiles/fp7bk7sf.scavenger-1791166937893" "https://www.youtube.com/watch?v=jNQXAC9IVRw"`
 :: :: fix: add --no-write-comments
-:: `yt-dlp %SKIP_FLUFF% --skip-download --write-subs --write-auto-subs --sub-langs "en" --extractor-args "youtube:skip=translated_subs" -o "%TMP%\subs.%(id)s" --js-runtimes "node:%LOCALAPPDATA%\Author Software\nvm\.nodejs" --cookies-from-browser firefox:"%APPDATA%\Mozilla\Firefox\Profiles/fp7bk7sf.scavenger-1791166937893" "https://www.youtube.com/watch?v=jNQXAC9IVRw"`
-:: `yt-dlp %SKIP_FLUFF% --skip-download --write-subs --write-auto-subs --sub-langs "en" --extractor-args "youtube:skip=translated_subs" -o "%TMP%\subs.%(id)s" --js-runtimes "node:%LOCALAPPDATA%\Author Software\nvm\.nodejs" --cookies-from-browser firefox:"%APPDATA%\Mozilla\Firefox\Profiles/fp7bk7sf.scavenger-1791166937893" --batch-file "%playlist%"`
+:: `yt-dlp %SKIP_FLUFF% --skip-download --write-subs --write-auto-subs --sub-langs "en" --extractor-args "youtube:skip=translated_subs" -o "%TMP%\subs.%(id)s" --js-runtimes "node:%LOCALAPPDATA%\Author Software\nvm\.nodejs" --cookies-from-browser "firefox:%APPDATA%\Mozilla\Firefox\Profiles/fp7bk7sf.scavenger-1791166937893" "https://www.youtube.com/watch?v=jNQXAC9IVRw"`
+:: `yt-dlp %SKIP_FLUFF% --skip-download --write-subs --write-auto-subs --sub-langs "en" --extractor-args "youtube:skip=translated_subs" -o "%TMP%\subs.%(id)s" --js-runtimes "node:%LOCALAPPDATA%\Author Software\nvm\.nodejs" --cookies-from-browser "firefox:%APPDATA%\Mozilla\Firefox\Profiles/fp7bk7sf.scavenger-1791166937893" --batch-file "%playlist%"`
 
-REM %~sdp0\yt-dlp %QUIET% --skip-download --dump-json --extractor-args "youtube:skip=translated_subs" --js-runtimes %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% "https://www.youtube.com/watch?v=jojMVmRZABw" 
-REM %~sdp0\yt-dlp %QUIET% --skip-download --dump-json --extractor-args "youtube:skip=translated_subs" --js-runtimes %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% --batch-file "%~1" 
-REM %~sdp0\yt-dlp %QUIET% --skip-download --dump-json --extractor-args "youtube:skip=translated_subs" --js-runtimes %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% --batch-file "%~1" | jq -r "(.subtitles.en // .automatic_captions.en)[] | select(.ext == \"vtt\") | .url" | xargs curl -s
+REM %~sdp0\yt-dlp %QUIET% --skip-download --dump-json --extractor-args "youtube:skip=translated_subs" --js-runtimes "node:%NODE_PATH%" --cookies-from-browser "%BROWSER%:%BROWSER_PROFILE_PATH%" "https://www.youtube.com/watch?v=jojMVmRZABw" 
+REM %~sdp0\yt-dlp %QUIET% --skip-download --dump-json --extractor-args "youtube:skip=translated_subs" --js-runtimes "node:%NODE_PATH%" --cookies-from-browser "%BROWSER%:%BROWSER_PROFILE_PATH%" --batch-file "%~1" 
+REM %~sdp0\yt-dlp %QUIET% --skip-download --dump-json --extractor-args "youtube:skip=translated_subs" --js-runtimes "node:%NODE_PATH%" --cookies-from-browser "%BROWSER%:%BROWSER_PROFILE_PATH%" --batch-file "%~1" | jq -r "(.subtitles.en // .automatic_captions.en)[] | select(.ext == \"vtt\") | .url" | xargs curl -s
 
 :: download vtt with name = subs.9aTRnV6g0eQ.en.vtt
-IF DEFINED VERSOSE echo %~sdp0\yt-dlp %QUIET% %SKIP_FLUFF% --skip-download --write-subs --write-auto-subs --sub-langs "%lang%" --extractor-args "youtube:skip=translated_subs" -o "%SUBS_FILENAME%%%(id)s" --js-runtimes %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% --batch-file "%playlist%"
-REM %~sdp0\yt-dlp %QUIET% %SKIP_FLUFF% --skip-download --write-subs --write-auto-subs --sub-langs "%lang%" --extractor-args "youtube:skip=translated_subs" -o "%SUBS_FILENAME%%%(id)s" --js-runtimes %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% --batch-file "%playlist%"
+IF DEFINED VERSOSE echo %~sdp0\yt-dlp %QUIET% %SKIP_FLUFF% --skip-download --write-subs --write-auto-subs --sub-langs "%lang%" --extractor-args "youtube:skip=translated_subs" -o "%SUBS_FILENAME%%%(id)s" --js-runtimes "node:%NODE_PATH%" --cookies-from-browser "%BROWSER%:%BROWSER_PROFILE_PATH%" --batch-file "%playlist%"
+REM %~sdp0\yt-dlp %QUIET% %SKIP_FLUFF% --skip-download --write-subs --write-auto-subs --sub-langs "%lang%" --extractor-args "youtube:skip=translated_subs" -o "%SUBS_FILENAME%%%(id)s" --js-runtimes "node:%NODE_PATH%" --cookies-from-browser "%BROWSER%:%BROWSER_PROFILE_PATH%" --batch-file "%playlist%"
 
 :: count number of videos
 REM for /f %%l in ('busybox wc -l ^< yta.playlist.txt') DO set numVideos=%%l
 REM IF %numVideos% GTR 1 exit /b 0
-
-:: Process local files to strip out timecodes, layout tags, and duplicates
-setlocal enabledelayedexpansion
 
 REM MSDOS SUCKS SO MUCH: = and , are space delimiters when used is sub commands
 REM for /f "tokens=*" %%v in ('echo busybox cut -d^= -f2 %1') DO echo v=%%v ==> output is v=busybox cut -d -f2 "%TMP%\yta.playlist.txt"
