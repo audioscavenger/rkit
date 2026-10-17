@@ -188,7 +188,7 @@ echo %~n0 --video           download only video; *default
 echo %~n0 --audio           download only audio; default is auto m4a/mp3
 echo %~n0   --mp3             force audio to mp3 (ffmpeg required)
 echo %~n0   --m4a             force audio to m4a
-echo %~n0 --subs            dump only subtitles/transcripts as json
+echo %~n0 --subs            dump only subtitles/transcripts (english) to stdout; also creates /tmp/subs.en.vtt
 echo %~n0 --loop            loop over asking for urls one by one
 echo %~n0 --update          download latest yt-dlp release from GitHub
 echo %~n0 --node    ^<path^>  use node at path for yt-dlp js runtime
