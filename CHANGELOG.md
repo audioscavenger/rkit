@@ -1,4 +1,5 @@
 ## Contents
+- [v1.6.15](#v1615)
 - [v1.6.14](#v1614)
 - [v1.6.13](#v1613)
 - [v1.6.12](#v1612)
@@ -10,6 +11,10 @@
 - [v1.1.0](#v110)
 - [v1.0.1](#v101)
 - [v1.0.0](#v100)
+
+* v1.6.15
+  * yta.cmd:
+    * perfect transcript! no dupes, no blank lines, no extra spaces.
 
 * v1.6.14
   * yta.cmd:

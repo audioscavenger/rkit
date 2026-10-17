@@ -350,9 +350,13 @@ REM sed -E '
   REM s/<[^>]*>//g;           # Strip word-by-word timing markers and styling tags
 REM ' "$FILE_PATH" | awk 'NF' | uniq
 
-where perl >NUL 2>&1 && perl -pe "s/^[0-9]{2}:[0-9]{2}.*\n//g; s/^(WEBVTT|Kind:|Language:).*\n//g; s/<[^>]*>//g" %1 | busybox awk "NF" | busybox uniq > %2 && exit /b
-where sd   >NUL 2>&1 && grep -Ev "^[0-9]{2}:[0-9]{2}|^WEBVTT|^Kind:|^Language:" %1 | sd "<[^>]*>" "" | busybox awk "NF" | busybox uniq > %2 && exit /b
-busybox sed -E "/^[0-9]{2}:[0-9]{2}/d; /^WEBVTT/d; /^Kind:/d; /^Language:/d; s/<[^>]*>//g" %1 | busybox awk "NF" | busybox uniq > %2 && exit /b
+REM yta.cmd --subs --dump "https://www.youtube.com/watch?v=jojMVmRZABw"
+
+:: with just | busybox awk "NF" | busybox uniq - there's too many lines
+REM busybox sed -E "/^[0-9]{2}:[0-9]{2}/d; /^WEBVTT/d; /^Kind:/d; /^Language:/d; s/<[^>]*>//g; s/^[[:space:]]*//; s/[[:space:]]*$//" %1 | busybox uniq -i | busybox awk "{printf \"%%s \", $0; if ($0 ~ /[.!?][ \t]*$/) print \"\"}" | busybox awk "NF" | busybox uniq -i >%2
+:: too many repeated spaces
+busybox sed -E "/^[0-9]{2}:[0-9]{2}/d; /^WEBVTT/d; /^Kind:/d; /^Language:/d; s/<[^>]*>//g; s/^[[:space:]]*//; s/[[:space:]]*$//; /^[[:space:]]*$/d" %1 | busybox uniq -i | busybox awk "{gsub(/[[:space:]]+/, \" \"); printf \"%%s \", $0; if ($0 ~ /[.!?][ \t]*$/) print \"\"}" | busybox awk "NF" | busybox uniq -i >%2
+
 
 goto :EOF
 
@@ -377,7 +381,7 @@ REM %~sdp0\yt-dlp %QUIET% --skip-download --dump-json --extractor-args "youtube:
 
 :: download vtt with name = subs.9aTRnV6g0eQ.en.vtt
 IF DEFINED VERSOSE echo %~sdp0\yt-dlp %QUIET% %SKIP_FLUFF% --skip-download --write-subs --write-auto-subs --sub-langs "%lang%" --extractor-args "youtube:skip=translated_subs" -o "%SUBS_FILENAME%%%(id)s" --js-runtimes %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% --batch-file "%playlist%"
-%~sdp0\yt-dlp %QUIET% %SKIP_FLUFF% --skip-download --write-subs --write-auto-subs --sub-langs "%lang%" --extractor-args "youtube:skip=translated_subs" -o "%SUBS_FILENAME%%%(id)s" --js-runtimes %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% --batch-file "%playlist%"
+REM %~sdp0\yt-dlp %QUIET% %SKIP_FLUFF% --skip-download --write-subs --write-auto-subs --sub-langs "%lang%" --extractor-args "youtube:skip=translated_subs" -o "%SUBS_FILENAME%%%(id)s" --js-runtimes %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% --batch-file "%playlist%"
 
 :: count number of videos
 REM for /f %%l in ('busybox wc -l ^< yta.playlist.txt') DO set numVideos=%%l
@@ -387,7 +391,7 @@ REM IF %numVideos% GTR 1 exit /b 0
 setlocal enabledelayedexpansion
 
 REM MSDOS SUCKS SO MUCH: = and , are space delimiters when used is sub commands
-REM for /f "tokens=*" %%v in ('echo busybox cut -d^= -f2 %1') DO echo v=%%v ==> output is v=busybox cut -d -f2 "E:\TEMP\WIN10-PRONWKST\eric\yta.playlist.txt"
+REM for /f "tokens=*" %%v in ('echo busybox cut -d^= -f2 %1') DO echo v=%%v ==> output is v=busybox cut -d -f2 "%TMP%\yta.playlist.txt"
 REM for /f %%v in ('busybox cut -d^= -f2 %playlist%') DO echo v=%%v         ==> output is v=jNQXAC9IVRw
 
 for /f %%v in ('busybox cut -d^= -f2 %playlist%') DO (
