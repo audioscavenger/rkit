@@ -1,4 +1,5 @@
 ## Contents
+- [v1.6.13](#v1612)
 - [v1.6.12](#v1612)
 - [v1.4.6](#v146)
 - [v1.4.5](#v145)
@@ -8,6 +9,11 @@
 - [v1.1.0](#v110)
 - [v1.0.1](#v101)
 - [v1.0.0](#v100)
+
+* v1.6.13
+  * yta.cmd:
+    * --subs download /tmp/subs.video_id.en.vtt (only english) and create transcript /tmp/subs.video_id.en.txt
+    * --dump also dump transcript to stdout
 
 * v1.6.12
   * yta.cmd:

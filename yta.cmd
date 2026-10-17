@@ -9,6 +9,7 @@ setlocal
 set VERBOSE=
 set QUIET=--quiet
 
+set VIDEO_ID=
 set playlist_urls=%TEMP%\%~n0.playlist.txt
 set audioFormat=--audio-format m4a/mp3
 set videoFormat=-t mp4
@@ -29,6 +30,8 @@ set NODE_PATH=
 set ffmpeg_path=E:\wintools\PortableApps\Magick
 
 :prechecks
+
+where busybox >NUL 2>&1 || (echo error: buxybox not found & exit 1)
 
 del /f /q "%playlist_urls%" >NUL 2>&1
 
@@ -104,6 +107,7 @@ IF /I "%~1"=="--m4a"    set audioFormat=-t aac
 IF /I "%~1"=="--video"  set "VIDEO=true" & set "AUDIO=" & set "SUBS="
 IF /I "%~1"=="--audio"  set "VIDEO=" & set "AUDIO=true" & set "SUBS="
 IF /I "%~1"=="--subs"   set "VIDEO=" & set "AUDIO=" & set "SUBS=true"
+IF /I "%~1"=="--dump"   set "DUMP=true"
 IF /I "%~1"=="--loop"   call :loop
 
 IF EXIST "%~1" call :parse_file "%~1"
@@ -188,7 +192,8 @@ echo %~n0 --video           download only video; *default
 echo %~n0 --audio           download only audio; default is auto m4a/mp3
 echo %~n0   --mp3             force audio to mp3 (ffmpeg required)
 echo %~n0   --m4a             force audio to m4a
-echo %~n0 --subs            dump only subtitles/transcripts (english) to stdout; also creates /tmp/subs.en.vtt
+echo %~n0 --subs            download /tmp/subs.video_id.en.vtt (only english) and create transcript /tmp/subs.video_id.en.txt
+echo %~n0   --dump            also dump transcript to stdout
 echo %~n0 --loop            loop over asking for urls one by one
 echo %~n0 --update          download latest yt-dlp release from GitHub
 echo %~n0 --node    ^<path^>  use node at path for yt-dlp js runtime
@@ -266,15 +271,15 @@ goto :loop
 
 :extract_url_from_playlist url playlist_urls
 
-echo %~sdp0\yt-dlp %QUIET% -x --flat-playlist --print webpage_url %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% %1
+IF DEFINED VERSOSE echo %~sdp0\yt-dlp %QUIET% -x --flat-playlist --print webpage_url %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% %1
 %~sdp0\yt-dlp %QUIET% -x --flat-playlist --print webpage_url %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% %1 >"%~2"
 
 goto :EOF
 
 
 :audio_dl playlist
-echo ---------------------------------- maxAudioQuality=%maxAudioQuality% ----------------------------------
-type "%~1"
+IF DEFINED VERSOSE echo ---------------------------------- maxAudioQuality=%maxAudioQuality% ----------------------------------
+IF DEFINED VERSOSE type "%~1"
 
 :: try to guess format
 REM echo %1 | findstr bandcamp.com >NUL && set format=mp3
@@ -303,17 +308,17 @@ REM %~sdp0\yt-dlp %QUIET% --list-formats %NODE_PATH% --cookies-from-browser %BRO
 REM if %ext%==m4a %~sdp0\yt-dlp %QUIET% --extract-audio -S aext:m4a:mp3,acodec:aac:mp3   --audio-quality 0 --no-keep-video --embed-metadata --embed-thumbnail --add-metadata %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% --batch-file %playlist_urls%
 REM if %ext%==mp3 %~sdp0\yt-dlp %QUIET% --extract-audio --audio-format mp3               --audio-quality 0 --no-keep-video --embed-metadata --embed-thumbnail --add-metadata %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% --batch-file %playlist_urls%
 
-echo %~sdp0\yt-dlp %QUIET% --extract-audio %audioFormat% --audio-quality %maxAudioQuality% --no-keep-video --embed-metadata --embed-thumbnail --add-metadata %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% --batch-file "%~1" --ffmpeg-location "%ffmpeg_path%"
+IF DEFINED VERSOSE echo %~sdp0\yt-dlp %QUIET% --extract-audio %audioFormat% --audio-quality %maxAudioQuality% --no-keep-video --embed-metadata --embed-thumbnail --add-metadata %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% --batch-file "%~1" --ffmpeg-location "%ffmpeg_path%"
 %~sdp0\yt-dlp %QUIET% --extract-audio %audioFormat% --audio-quality %maxAudioQuality% --no-keep-video --embed-metadata --embed-thumbnail --add-metadata %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% --batch-file "%~1" --ffmpeg-location "%ffmpeg_path%"
 
 goto :EOF
 
 
 :video_dl playlist
-echo ---------------------------------- maxAudioQuality=%maxAudioQuality% ----------------------------------
+IF DEFINED VERSOSE echo ---------------------------------- maxAudioQuality=%maxAudioQuality% ----------------------------------
 type "%~1"
 
-echo %~sdp0\yt-dlp %QUIET% %videoFormat% -f "bv*[height<=%maxVideoQuality%]+ba/b[height<=%maxVideoQuality%]" --audio-quality %maxAudioQuality% --embed-metadata --embed-thumbnail --add-metadata %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% --batch-file "%~1" --ffmpeg-location "%ffmpeg_path%"
+IF DEFINED VERSOSE echo %~sdp0\yt-dlp %QUIET% %videoFormat% -f "bv*[height<=%maxVideoQuality%]+ba/b[height<=%maxVideoQuality%]" --audio-quality %maxAudioQuality% --embed-metadata --embed-thumbnail --add-metadata %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% --batch-file "%~1" --ffmpeg-location "%ffmpeg_path%"
 %~sdp0\yt-dlp %QUIET% %videoFormat% -f "bv*[height<=%maxVideoQuality%]+ba/b[height<=%maxVideoQuality%]" --audio-quality %maxAudioQuality% --embed-metadata --embed-thumbnail --add-metadata %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% --batch-file "%~1" --ffmpeg-location "%ffmpeg_path%"
 
 goto :EOF
@@ -343,7 +348,9 @@ echo yt-dlp updated successfully.
 goto :EOF
 
 
-:clean_vtt SUBS_FILE_RAW SUBS_FILE_CLEAN
+:vtt2transcript SUBS_FILE_RAW TRANSCRIPT
+echo %*
+pause
 REM sed -E '
   REM /^[0-9]{2}:[0-9]{2}/d;  # Remove timecode blocks
   REM /^WEBVTT/d;             # Remove file header
@@ -352,33 +359,49 @@ REM sed -E '
   REM s/<[^>]*>//g;           # Strip word-by-word timing markers and styling tags
 REM ' "$FILE_PATH" | awk 'NF' | uniq
 
-where perl >NUL 2>&1 && perl -pe "s/^[0-9]{2}:[0-9]{2}.*\n//g; s/^(WEBVTT|Kind:|Language:).*\n//g; s/<[^>]*>//g" %1 | awk "NF" | uniq > %2 && exit /b
-where sed  >NUL 2>&1 && sed -E "/^[0-9]{2}:[0-9]{2}/d; /^WEBVTT/d; /^Kind:/d; /^Language:/d; s/<[^>]*>//g" %1 | awk "NF" | uniq > %2 && exit /b
-where sd   >NUL 2>&1 && grep -Ev "^[0-9]{2}:[0-9]{2}|^WEBVTT|^Kind:|^Language:" %1 | sd "<[^>]*>" "" | awk "NF" | uniq > %2 && exit /b
+where perl >NUL 2>&1 && perl -pe "s/^[0-9]{2}:[0-9]{2}.*\n//g; s/^(WEBVTT|Kind:|Language:).*\n//g; s/<[^>]*>//g" %1 | busybox awk "NF" | busybox uniq > %2 && exit /b
+where sd   >NUL 2>&1 && grep -Ev "^[0-9]{2}:[0-9]{2}|^WEBVTT|^Kind:|^Language:" %1 | sd "<[^>]*>" "" | busybox awk "NF" | busybox uniq > %2 && exit /b
+busybox sed -E "/^[0-9]{2}:[0-9]{2}/d; /^WEBVTT/d; /^Kind:/d; /^Language:/d; s/<[^>]*>//g" %1 | busybox awk "NF" | busybox uniq > %2 && exit /b
 
 goto :EOF
 
 
 :subs_dl playlist SUBS_FILENAME lang
 set playlist=%1
-set SUBS_FILENAME=%2.raw
-set SUBS_FILE_RAW="%~2.raw.%~3.vtt"
-set SUBS_FILE_CLEAN="%~2.%~3.vtt"
+set SUBS_FILENAME=%2.raw_
 
-IF DEFINED VERSOSE echo playlist=        %playlist%
-IF DEFINED VERSOSE echo SUBS_FILE_CLEAN= %SUBS_FILE%
+IF DEFINED VERSOSE echo playlist=   %playlist%
+IF DEFINED VERSOSE echo TRANSCRIPT= %SUBS_FILE%
 REM %~sdp0\yt-dlp %QUIET% --skip-download --dump-json --extractor-args "youtube:skip=translated_subs" %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% "https://www.youtube.com/watch?v=jojMVmRZABw" 
 REM %~sdp0\yt-dlp %QUIET% --skip-download --dump-json --extractor-args "youtube:skip=translated_subs" %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% --batch-file "%~1" 
 REM %~sdp0\yt-dlp %QUIET% --skip-download --dump-json --extractor-args "youtube:skip=translated_subs" %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% --batch-file "%~1" | jq -r "(.subtitles.en // .automatic_captions.en)[] | select(.ext == \"vtt\") | .url" | xargs curl -s
 
-:: download vtt
-IF DEFINED VERSOSE echo %~sdp0\yt-dlp %QUIET% --skip-download --write-subs --write-auto-subs --sub-langs "%lang%" --extractor-args "youtube:skip=translated_subs" -o %SUBS_FILENAME% %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% --batch-file %1
-%~sdp0\yt-dlp %QUIET% --skip-download --write-subs --write-auto-subs --sub-langs "%lang%" --extractor-args "youtube:skip=translated_subs" -o %SUBS_FILENAME% %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% --batch-file %1
+:: download vtt with name = subs.raw_9aTRnV6g0eQ.en.vtt
+IF DEFINED VERSOSE echo %~sdp0\yt-dlp %QUIET% --skip-download --write-subs --write-auto-subs --sub-langs "%lang%" --extractor-args "youtube:skip=translated_subs" -o "%SUBS_FILENAME%%%(id)s" %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% --batch-file %1
+%~sdp0\yt-dlp %QUIET% --skip-download --write-subs --write-auto-subs --sub-langs "%lang%" --extractor-args "youtube:skip=translated_subs" -o "%SUBS_FILENAME%%%(id)s" %NODE_PATH% --cookies-from-browser %BROWSER%:%PROFILE_PATH% --batch-file %1
 
-:: Process the local file to strip out timecodes, layout tags, and duplicates
-call :clean_vtt %SUBS_FILE_RAW% %SUBS_FILE_CLEAN%
+:: count number of videos
+for /f %%l in ('busybox wc -l ^< yta.playlist.txt') DO set numVideos=%%l
+IF %numVideos% GTR 1 exit /b 0
 
-type %SUBS_FILE_CLEAN%
+:: Process local files to strip out timecodes, layout tags, and duplicates
+setlocal enabledelayedexpansion
+
+for /f %%v in ('type %playlist% ^|  busybox cut -d= -f2') DO (
+  REM :: first, get the VIDEO_ID
+  set VIDEO_ID=%%v
+  set SUBS_FILE_RAW=""
+  set TRANSCRIPT=""
+  REM :: second, detect the file
+  for /f %%f in ('busybox ls "%~2.raw_!VIDEO_ID!.%~3.vtt"') DO set SUBS_FILE_RAW=%%f
+  REM :: set TRANSCRIPT file name
+  set TRANSCRIPT="%~2.%VIDEO_ID%.%~3.txt"
+  REM :: file will not exist if url was a playlist
+  IF EXIST !SUBS_FILE_RAW! call :vtt2transcript !SUBS_FILE_RAW! !TRANSCRIPT!
+  REM :: and dump the transcript to stdout
+  IF DEFINED DUMP IF EXIST !TRANSCRIPT! type !TRANSCRIPT!
+)
+endlocal
 
 goto :EOF
 
