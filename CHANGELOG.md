@@ -1,5 +1,6 @@
 ## Contents
-- [v1.6.13](#v1612)
+- [v1.6.14](#v1614)
+- [v1.6.13](#v1613)
 - [v1.6.12](#v1612)
 - [v1.4.6](#v146)
 - [v1.4.5](#v145)
@@ -9,6 +10,12 @@
 - [v1.1.0](#v110)
 - [v1.0.1](#v101)
 - [v1.0.0](#v100)
+
+* v1.6.14
+  * yta.cmd:
+    * MSDOS SUCKS SO MUCH: the spaces, commas (,), semicolons (;), and equal signs (=) are all treated as native argument separators
+    * in-line safe arguments parser and url rebuild as needed
+    * tested working with cmd, wt, and bash
 
 * v1.6.13
   * yta.cmd:
