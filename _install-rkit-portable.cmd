@@ -55,6 +55,7 @@ REM setlocal enabledelayedexpansion
 :: - [x] BurntSushi.ripgrep.MSVC _latest_
 :: - [x] sqlite _latest_
 :: - [x] tcpdump _latest_
+:: - [x] tea 0.16.0
 :: - [x] upx 5.1.1
 :: - [x] wget _latest_
 :: - [x] whosip _latest_ replaces sysinternal's whois
@@ -382,12 +383,8 @@ goto :EOF
 echo %c%%~0 %END%
 :: https://gitea.com/gitea/tea/releases
 :: then run: tea login add; tea is a tool for gitea project
-IF %bits% EQU 32 (
-  call :power_download https://gitea.com/attachments/8fa5daac-e0b4-4d49-8304-8b7b0d8705be %TMP%\tea.exe.xz
-) ELSE (
-  call :power_download https://gitea.com/attachments/2d24cb59-a569-47c3-b941-1683649ece4f %TMP%\tea.exe.xz
-)
-call :7unzip %TMP%\tea.exe.xz .\ nopassword tea.exe
+call :power_download https://gitea.com/gitea/tea/releases/download/v0.16.0/tea-0.16.0-windows-amd64.exe .\tea.exe
+
 goto :EOF
 
 :Xpdf
