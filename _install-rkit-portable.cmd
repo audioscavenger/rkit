@@ -46,13 +46,15 @@ REM setlocal enabledelayedexpansion
 :: - [x] ffmpeg+ffprobe 6.1
 :: - [x] file _latest_
 :: - [x] fzf _latest_
+:: - [x] duf _latest_
+:: - [x] sd _latest_
 :: - [x] gawk _latest_
 :: - [x] gitty _latest_
 :: - [x] jq _latest_
 :: - [x] msvcr110.dll  _as-needed_
 :: - [x] netcat _latest_
 :: - [x] nssm _latest_
-:: - [x] BurntSushi.ripgrep.MSVC _latest_
+:: - [x] ripgrep _latest_
 :: - [x] sqlite _latest_
 :: - [x] tcpdump _latest_
 :: - [x] tea 0.16.0
@@ -227,14 +229,26 @@ goto :EOF
 
 :fzf
 echo %c%%~0 %END%
-winget install fzf
+winget install fzf --scope machine
 IF EXIST %LOCALAPPDATA%\Microsoft\WinGet\Links\fzf.exe copy /y  %LOCALAPPDATA%\Microsoft\WinGet\Links\fzf.exe .\
+goto :EOF
+
+:duf
+echo %c%%~0 %END%
+winget install muesli.duf --scope machine
+IF EXIST %LOCALAPPDATA%\Microsoft\WinGet\Links\duf.exe copy /y  %LOCALAPPDATA%\Microsoft\WinGet\Links\duf.exe .\
+goto :EOF
+
+:sd
+echo %c%%~0 %END%
+winget install chmln.sd --scope machine
+IF EXIST %LOCALAPPDATA%\Microsoft\WinGet\Links\sd.exe copy /y  %LOCALAPPDATA%\Microsoft\WinGet\Links\sd.exe .\
 goto :EOF
 
 :rigrep
 echo %c%%~0 %END%
 REM ripgrep (command name: rg) is a lightning-fast, line-oriented command-line search tool that recursively searches directories for regular expression (regex) patterns. Created by Andrew Gallant and built in Rust, it is widely used by developers as a modern, significantly faster alternative to traditional tools like grep, ack, and The Silver Searcher (ag).
-winget install BurntSushi.ripgrep.MSVC
+winget install BurntSushi.ripgrep.MSVC --scope machine
 IF EXIST %LOCALAPPDATA%\Microsoft\WinGet\Links\rg.exe copy /y  %LOCALAPPDATA%\Microsoft\WinGet\Links\rg.exe .\
 goto :EOF
 
