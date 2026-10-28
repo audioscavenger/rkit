@@ -1,4 +1,5 @@
 ## Contents
+- [v1.6.17](#v1617)
 - [v1.6.16](#v1616)
 - [v1.6.15](#v1615)
 - [v1.6.14](#v1614)
@@ -12,6 +13,10 @@
 - [v1.1.0](#v110)
 - [v1.0.1](#v101)
 - [v1.0.0](#v100)
+
+* v1.6.17
+  * flatten-patches.cmd:
+    * merged missing parts from old version (hibernation off, shadow copies, OS uninstall removal, AnalyzeComponentStore, extra system folders, optional cleanup)
 
 * v1.6.16
   * yta.cmd:
